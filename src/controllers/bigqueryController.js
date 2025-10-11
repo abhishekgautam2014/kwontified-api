@@ -69,13 +69,22 @@ const getAllTablesAndColumns = async (req, res) => {
 	}
 };
 
-const getAccountSummaryMetrices = async (req, res) => {
+const runQuery = async (req, res) => {
 	try {
+		const { bquery, startDate = "2025-10-01", endDate = "2025-10-10" } = req.query;
+
+		if (!bquery || !queries[bquery]) {
+			return res.status(400).json({
+				success: false,
+				message: "Invalid or missing query parameter",
+			});
+		}
+
 		const options = {
-			query: queries.getAccountSummaryMetrices,
+			query: queries[bquery],
 			params: {
-				startDate: "2025-10-01",
-				endDate: "2025-10-10",
+				startDate,
+				endDate,
 			},
 			location: process.env.PROJECT_LOCATION,
 		};
@@ -85,13 +94,13 @@ const getAccountSummaryMetrices = async (req, res) => {
 
 		res.json({
 			success: true,
-			data: rows[0],
+			data: rows,
 		});
 	} catch (error) {
-		console.error("Error fetching account summary count:", error);
+		console.error(`Error running query ${req.query.bquery}:`, error);
 		res.status(500).json({
 			success: false,
-			message: "Failed to fetch account summary count",
+			message: "Failed to execute BigQuery query",
 			error: error.message,
 		});
 	}
@@ -100,5 +109,5 @@ const getAccountSummaryMetrices = async (req, res) => {
 module.exports = {
 	testConnection,
 	getAllTablesAndColumns,
-	getAccountSummaryMetrices,
+	runQuery,
 };
