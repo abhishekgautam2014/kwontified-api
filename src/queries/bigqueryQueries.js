@@ -1,6 +1,6 @@
 // This file contains all the BigQuery queries used in the application.
 
-const getAccountSummaryMetrices = `
+const accountSummaryMetrices = `
 SELECT 
   -- Core spend & sales metrics
   IFNULL(SUM(ad_spend), 0) AS ad_spend,
@@ -28,7 +28,7 @@ WHERE
   report_date BETWEEN @startDate AND @endDate;
 `;
 
-const addRevenueTotalSalestrendQuery = `
+const addRevenueTotalSalesTrend = `
 SELECT 
   report_date,
   SUM(ad_revenue) AS ad_revenue,
@@ -47,6 +47,6 @@ ORDER BY report_date;
 `;
 
 module.exports = {
-	getAccountSummaryMetrices: getAccountSummaryMetrices,
-	addRevenueTotalSalestrendQuery: addRevenueTotalSalestrendQuery,
+	accountSummaryMetrices: accountSummaryMetrices,
+	addRevenueTotalSalesTrend: addRevenueTotalSalesTrend,
 };
