@@ -63,8 +63,57 @@ GROUP BY report_date
 ORDER BY report_date;
 `;
 
+const acosTacosTrend = `
+SELECT 
+  report_date,
+  SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
+  SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos
+FROM 
+  \`intentwise_ecommerce_graph.account_summary\`
+WHERE 
+  report_date BETWEEN @startDate AND @endDate
+GROUP BY report_date
+ORDER BY report_date;
+`;
+
+const productSummary = `
+SELECT 
+  product_title,
+  sku,
+  product AS asin,
+
+  IFNULL(SUM(ad_spend), 0) AS ad_spend,
+  IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
+
+  SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
+
+  IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS total_sales,
+
+  SAFE_DIVIDE(
+    SUM(ad_spend),
+    (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0))
+  ) AS tacos
+
+FROM 
+  \`intentwise_ecommerce_graph.product_summary\`
+
+WHERE 
+  report_date BETWEEN @startDate AND @endDate
+
+GROUP BY 
+  product_title, sku, product
+
+ORDER BY 
+  total_sales DESC
+
+LIMIT 100;
+`;
+
 module.exports = {
 	accountSummaryMetrices: accountSummaryMetrices,
 	addRevenueTotalSalesTrend: addRevenueTotalSalesTrend,
 	selleCentralMetrices: selleCentralMetrices,
+	acosTacosTrend: acosTacosTrend,
+	productSummary: productSummary,
+	acosTacosTrend: acosTacosTrend,
 };

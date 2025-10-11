@@ -71,7 +71,11 @@ const getAllTablesAndColumns = async (req, res) => {
 
 const runQuery = async (req, res) => {
 	try {
-		const { bquery, startDate = "2025-10-01", endDate = "2025-10-10" } = req.query;
+		const {
+			bquery,
+			startDate = "2025-10-01",
+			endDate = "2025-10-10",
+		} = req.query;
 
 		if (!bquery || !queries[bquery]) {
 			return res.status(400).json({
