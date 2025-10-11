@@ -106,7 +106,7 @@ GROUP BY
 ORDER BY 
   total_sales DESC
 
-LIMIT 100;
+LIMIT @limit OFFSET @offset;
 `;
 
 module.exports = {

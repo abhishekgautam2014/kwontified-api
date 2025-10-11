@@ -75,6 +75,8 @@ const runQuery = async (req, res) => {
 			bquery,
 			startDate = "2025-10-01",
 			endDate = "2025-10-10",
+			page = 1,
+			pageSize = 100,
 		} = req.query;
 
 		if (!bquery || !queries[bquery]) {
@@ -83,12 +85,16 @@ const runQuery = async (req, res) => {
 				message: "Invalid or missing query parameter",
 			});
 		}
+		const limit = parseInt(pageSize, 10);
+		const offset = (parseInt(page, 10) - 1) * limit;
 
 		const options = {
 			query: queries[bquery],
 			params: {
 				startDate,
 				endDate,
+				limit,
+				offset,
 			},
 			location: process.env.PROJECT_LOCATION,
 		};
