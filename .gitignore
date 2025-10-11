@@ -56,7 +56,7 @@ jspm_packages/
 .env.production
 .env.local
 .env.*.local
-
+all-client-amazon-database-5a661bb91494.json
 # Mac files
 .DS_Store
 
