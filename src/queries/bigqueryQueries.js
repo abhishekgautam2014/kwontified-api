@@ -47,7 +47,7 @@ WHERE
 
 const addRevenueTotalSalesTrend = `
 SELECT 
-  report_date,
+  FORMAT_DATE('%Y-%m-%d', report_date) AS report_date,
   SUM(ad_revenue) AS ad_revenue,
   SUM(product_sales) + SUM(ordered_revenue) AS total_sales,
   CASE 
@@ -65,7 +65,7 @@ ORDER BY report_date;
 
 const acosTacosTrend = `
 SELECT 
-  report_date,
+  FORMAT_DATE('%Y-%m-%d', report_date) AS report_date,
   SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
   SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos
 FROM 
