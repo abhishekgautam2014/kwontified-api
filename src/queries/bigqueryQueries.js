@@ -28,6 +28,23 @@ WHERE
   report_date BETWEEN @startDate AND @endDate;
 `;
 
+const selleCentralMetrices = `
+SELECT 
+  -- Core spend & sales metrics
+SUM(units_ordered) AS units_ordered,
+  SUM(total_order_items) AS total_order_items,
+  AVG(avg_sales_per_order_item_amt) AS avg_sales_per_order_item_amt,
+  AVG(avg_selling_price_amt) AS avg_selling_price_amt,
+  SUM(sessions) AS sessions,
+  SUM(page_views) AS page_views,
+  AVG(avg_offer_count) AS avg_offer_count,
+  AVG(refund_rate) AS refund_rate
+FROM 
+  \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`
+WHERE 
+  sale_date BETWEEN @startDate AND @endDate;
+`;
+
 const addRevenueTotalSalesTrend = `
 SELECT 
   report_date,
@@ -49,4 +66,5 @@ ORDER BY report_date;
 module.exports = {
 	accountSummaryMetrices: accountSummaryMetrices,
 	addRevenueTotalSalesTrend: addRevenueTotalSalesTrend,
+	selleCentralMetrices: selleCentralMetrices,
 };
