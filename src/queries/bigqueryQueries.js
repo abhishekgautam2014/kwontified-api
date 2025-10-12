@@ -76,6 +76,24 @@ GROUP BY report_date
 ORDER BY report_date;
 `;
 
+const productBySales = `
+SELECT 
+  product AS asin,
+  sku,
+  SAFE_ADD(SUM(product_sales), SUM(ordered_revenue)) AS total_sales,
+  IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
+  IFNULL(SUM(ad_spend), 0) AS ad_spend
+FROM 
+  intentwise_ecommerce_graph.product_summary
+WHERE 
+  report_date BETWEEN @startDate AND @endDate
+GROUP BY 
+  asin, sku
+ORDER BY 
+  total_sales DESC
+LIMIT 100;
+`;
+
 const productSummary = `
 SELECT 
   product_title,
@@ -116,4 +134,5 @@ module.exports = {
 	acosTacosTrend: acosTacosTrend,
 	productSummary: productSummary,
 	acosTacosTrend: acosTacosTrend,
+	productBySales: productBySales,
 };
