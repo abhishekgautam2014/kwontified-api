@@ -70,20 +70,69 @@ FROM current_period c, previous_period p;
 `;
 
 const selleCentralMetrices = `
-SELECT 
-  -- Core spend & sales metrics
-SUM(units_ordered) AS units_ordered,
-  SUM(total_order_items) AS total_order_items,
-  AVG(avg_sales_per_order_item_amt) AS avg_sales_per_order_item_amt,
-  AVG(avg_selling_price_amt) AS avg_selling_price_amt,
-  SUM(sessions) AS sessions,
-  SUM(page_views) AS page_views,
-  AVG(avg_offer_count) AS avg_offer_count,
-  AVG(refund_rate) AS refund_rate
-FROM 
-  \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`
-WHERE 
-  sale_date BETWEEN @startDate AND @endDate;
+WITH
+-- Step 1: Define current and previous date ranges dynamically
+date_ranges AS (
+  SELECT 
+    DATE(@startDate) AS start_date,
+    DATE(@endDate) AS end_date,
+    DATE_SUB(DATE(@startDate), INTERVAL 1 DAY) AS prev_end_date,
+    DATE_SUB(DATE(@startDate), INTERVAL DATE_DIFF(DATE(@endDate), DATE(@startDate), DAY) + 1 DAY) AS prev_start_date
+),
+
+-- Step 2: Current period metrics
+current_period AS (
+  SELECT 
+    IFNULL(SUM(units_ordered), 0) AS units_ordered,
+    IFNULL(SUM(total_order_items), 0) AS total_order_items,
+    IFNULL(AVG(avg_sales_per_order_item_amt), 0) AS avg_sales_per_order_item_amt,
+    IFNULL(AVG(avg_selling_price_amt), 0) AS avg_selling_price_amt,
+    IFNULL(SUM(sessions), 0) AS sessions,
+    IFNULL(SUM(page_views), 0) AS page_views,
+    IFNULL(AVG(avg_offer_count), 0) AS avg_offer_count,
+    IFNULL(AVG(refund_rate), 0) AS refund_rate
+  FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`, date_ranges
+  WHERE sale_date BETWEEN date_ranges.start_date AND date_ranges.end_date
+),
+
+-- Step 3: Previous period metrics
+previous_period AS (
+  SELECT 
+    IFNULL(SUM(units_ordered), 0) AS units_ordered,
+    IFNULL(SUM(total_order_items), 0) AS total_order_items,
+    IFNULL(AVG(avg_sales_per_order_item_amt), 0) AS avg_sales_per_order_item_amt,
+    IFNULL(AVG(avg_selling_price_amt), 0) AS avg_selling_price_amt,
+    IFNULL(SUM(sessions), 0) AS sessions,
+    IFNULL(SUM(page_views), 0) AS page_views,
+    IFNULL(AVG(avg_offer_count), 0) AS avg_offer_count,
+    IFNULL(AVG(refund_rate), 0) AS refund_rate
+  FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`, date_ranges
+  WHERE sale_date BETWEEN date_ranges.prev_start_date AND date_ranges.prev_end_date
+)
+
+-- Step 4: Combine current & previous metrics + calculate percentage changes
+SELECT
+  -- Current metrics
+  c.units_ordered,
+  c.total_order_items,
+  c.avg_sales_per_order_item_amt,
+  c.avg_selling_price_amt,
+  c.sessions,
+  c.page_views,
+  c.avg_offer_count,
+  c.refund_rate,
+
+  -- % change vs previous period
+  SAFE_DIVIDE((c.units_ordered - p.units_ordered), p.units_ordered) * 100 AS units_ordered_change_pct,
+  SAFE_DIVIDE((c.total_order_items - p.total_order_items), p.total_order_items) * 100 AS total_order_items_change_pct,
+  SAFE_DIVIDE((c.avg_sales_per_order_item_amt - p.avg_sales_per_order_item_amt), p.avg_sales_per_order_item_amt) * 100 AS avg_sales_per_order_item_amt_change_pct,
+  SAFE_DIVIDE((c.avg_selling_price_amt - p.avg_selling_price_amt), p.avg_selling_price_amt) * 100 AS avg_selling_price_amt_change_pct,
+  SAFE_DIVIDE((c.sessions - p.sessions), p.sessions) * 100 AS sessions_change_pct,
+  SAFE_DIVIDE((c.page_views - p.page_views), p.page_views) * 100 AS page_views_change_pct,
+  SAFE_DIVIDE((c.avg_offer_count - p.avg_offer_count), p.avg_offer_count) * 100 AS avg_offer_count_change_pct,
+  SAFE_DIVIDE((c.refund_rate - p.refund_rate), p.refund_rate) * 100 AS refund_rate_change_pct
+
+FROM current_period c, previous_period p;
 `;
 
 const addRevenueTotalSalesTrend = `
