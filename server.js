@@ -1,9 +1,11 @@
 const express = require('express');
+const cors = require('cors');
 const bigQueryRateLimiter = require('./src/middleware/rateLimiter');
 const bigqueryRoutes = require('./src/routes/bigqueryRoutes');
 require('dotenv').config();
 
 const app = express();
+app.use(cors());
 app.use(bigQueryRateLimiter);
 const port = process.env.PORT || 3000;
 
