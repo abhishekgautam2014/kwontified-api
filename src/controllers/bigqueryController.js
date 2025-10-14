@@ -70,32 +70,58 @@ const getAllTablesAndColumns = async (req, res) => {
 };
 
 const runQuery = async (req, res) => {
-	try {
-		const {
-			bquery,
-			startDate = "2025-10-01",
-			endDate = "2025-10-10",
-			page = 1,
-			pageSize = 100,
-		} = req.query;
+	const {
+		queryName,
+		startDate = "2025-10-01",
+		endDate = "2025-10-10",
+		page = 1,
+		pageSize = 10,
+		sku,
+		asin,
+		product_title,
+	} = req.query;
 
-		if (!bquery || !queries[bquery]) {
+	try {
+		if (!queryName || !queries[queryName]) {
 			return res.status(400).json({
 				success: false,
-				message: "Invalid or missing query parameter",
+				message:
+					"Invalid or missing query name parameter. Please provide a valid 'queryName'.",
 			});
 		}
+
 		const limit = parseInt(pageSize, 10);
 		const offset = (parseInt(page, 10) - 1) * limit;
 
+		let whereClause = "";
+		const params = {
+			startDate,
+			endDate,
+			limit,
+			offset,
+		};
+
+		if (sku) {
+			whereClause += ` AND sku = @sku`;
+			params.sku = sku;
+		}
+		if (asin) {
+			whereClause += ` AND product = @asin`;
+			params.asin = asin;
+		}
+		if (product_title) {
+			whereClause += ` AND product_title LIKE @product_title`;
+			params.product_title = `%${product_title}%`;
+		}
+
+		const query = queries[queryName].replace(
+			"{{where_clause}}",
+			whereClause
+		);
+
 		const options = {
-			query: queries[bquery],
-			params: {
-				startDate,
-				endDate,
-				limit,
-				offset,
-			},
+			query,
+			params,
 			location: process.env.PROJECT_LOCATION,
 		};
 
@@ -107,7 +133,7 @@ const runQuery = async (req, res) => {
 			data: rows,
 		});
 	} catch (error) {
-		console.error(`Error running query ${req.query.bquery}:`, error);
+		console.error(`Error running query ${queryName}:`, error);
 		res.status(500).json({
 			success: false,
 			message: "Failed to execute BigQuery query",

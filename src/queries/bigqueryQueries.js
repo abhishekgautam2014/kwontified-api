@@ -222,6 +222,7 @@ FROM
 
 WHERE 
   report_date BETWEEN @startDate AND @endDate
+  {{where_clause}}
 
 GROUP BY 
   product_title, sku, product
