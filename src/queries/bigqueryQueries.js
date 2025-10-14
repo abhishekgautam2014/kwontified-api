@@ -166,6 +166,19 @@ GROUP BY report_date
 ORDER BY report_date;
 `;
 
+const totalUnitOrderedandSales = `
+SELECT 
+  FORMAT_DATE('%Y-%m-%d', report_date) AS report_date,
+  SUM(product_quantity) AS units_ordered,
+  SUM(product_sales) + SUM(ordered_revenue) AS total_sales
+FROM 
+  \`intentwise_ecommerce_graph.account_summary\`
+WHERE 
+  report_date BETWEEN @startDate AND @endDate
+GROUP BY report_date
+ORDER BY report_date;
+`;
+
 const productBySales = `
 SELECT 
   product AS asin,
@@ -200,7 +213,9 @@ SELECT
   SAFE_DIVIDE(
     SUM(ad_spend),
     (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0))
-  ) AS tacos
+  ) AS tacos,
+  
+  COUNT(*) OVER() AS total_count
 
 FROM 
   \`intentwise_ecommerce_graph.product_summary\`
@@ -224,5 +239,6 @@ module.exports = {
 	acosTacosTrend: acosTacosTrend,
 	productSummary: productSummary,
 	acosTacosTrend: acosTacosTrend,
+	totalUnitOrderedandSales: totalUnitOrderedandSales,
 	productBySales: productBySales,
 };
