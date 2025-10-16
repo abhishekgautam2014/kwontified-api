@@ -94,6 +94,54 @@ const getSchema = async (tableId) => {
 	}
 };
 
+// 🧩 1️⃣ Build WHERE clause dynamically based on filters
+const buildFilters = (filters, validColumns, fields) => {
+	let whereClause = "";
+	const params = {};
+
+	Object.entries(filters).forEach(([key, value]) => {
+		if (
+			!value ||
+			[
+				"queryName",
+				"startDate",
+				"endDate",
+				"page",
+				"pageSize",
+				"sortBy",
+				"sortOrder",
+			].includes(key)
+		)
+			return;
+
+		if (!validColumns.includes(key)) return;
+
+		const fieldType = fields.find((f) => f.name === key)?.type || "STRING";
+
+		if (fieldType === "STRING") {
+			whereClause += ` AND ${key} LIKE @${key}`;
+			params[key] = `%${value}%`;
+		} else {
+			whereClause += ` AND ${key} = @${key}`;
+			params[key] = isNaN(value) ? value : Number(value);
+		}
+	});
+
+	return { whereClause, params };
+};
+
+// 🧩 2️⃣ Build ORDER BY clause dynamically
+const buildSorting = (sortBy, sortOrder, validColumns) => {
+	if (sortBy && validColumns.includes(sortBy)) {
+		const direction = ["asc", "desc"].includes(sortOrder?.toLowerCase())
+			? sortOrder.toUpperCase()
+			: "DESC";
+		return `ORDER BY ${sortBy} ${direction}`;
+	}
+	return "ORDER BY total_sales DESC"; // fallback
+};
+
+// 🧩 3️⃣ Main Function — runQuery
 const runQuery = async (req, res) => {
 	try {
 		const {
@@ -102,6 +150,8 @@ const runQuery = async (req, res) => {
 			endDate = "2025-10-10",
 			page = 1,
 			pageSize = 10,
+			sortBy,
+			sortOrder = "desc",
 			...filters
 		} = req.query;
 
@@ -115,10 +165,8 @@ const runQuery = async (req, res) => {
 		const limit = parseInt(pageSize, 10);
 		const offset = (parseInt(page, 10) - 1) * limit;
 
-		// 🧩 Step 1: Detect table name (expect backtick-wrapped)
 		const queryText = queries[queryName];
 		const tableMatch = queryText.match(/`([^`]+)`/);
-
 		if (!tableMatch) {
 			return res.status(400).json({
 				success: false,
@@ -127,45 +175,36 @@ const runQuery = async (req, res) => {
 			});
 		}
 
-		const tableId = tableMatch[1]; // e.g. intentwise_ecommerce_graph.product_summary
-
-		// 🧩 Step 2: Get schema dynamically (cached)
+		const tableId = tableMatch[1];
 		const fields = await getSchema(tableId);
 		const validColumns = fields.map((f) => f.name);
 
-		let whereClause = "";
-		const params = { startDate, endDate, limit, offset };
+		// 🔍 Filters
+		const { whereClause, params: filterParams } = buildFilters(
+			filters,
+			validColumns,
+			fields
+		);
 
-		// 🧩 Step 3: Add filters dynamically for only valid columns
-		Object.entries(filters).forEach(([key, value]) => {
-			if (
-				!value ||
-				[
-					"queryName",
-					"startDate",
-					"endDate",
-					"page",
-					"pageSize",
-				].includes(key)
-			)
-				return;
+		// 🔽 Sorting
+		const orderClause = buildSorting(sortBy, sortOrder, validColumns);
 
-			if (!validColumns.includes(key)) return; // skip invalid filters
+		// 🧠 Merge all params
+		const params = {
+			startDate,
+			endDate,
+			limit,
+			offset,
+			...filterParams,
+		};
 
-			const fieldType =
-				fields.find((f) => f.name === key)?.type || "STRING";
+		// 🧩 Final Query Construction
+		let finalQuery = queryText
+			.replace("{{where_clause}}", whereClause)
+			.replace(/ORDER BY[\s\S]*?(?=LIMIT|$)/i, "")
+			.replace(/LIMIT[\s\S]*/i, "");
 
-			if (fieldType === "STRING") {
-				whereClause += ` AND ${key} LIKE @${key}`;
-				params[key] = `%${value}%`;
-			} else {
-				whereClause += ` AND ${key} = @${key}`;
-				params[key] = isNaN(value) ? value : Number(value);
-			}
-		});
-
-		// Replace where placeholder
-		const finalQuery = queryText.replace("{{where_clause}}", whereClause);
+		finalQuery += `\n${orderClause}\nLIMIT @limit OFFSET @offset`;
 
 		const options = {
 			query: finalQuery,
@@ -173,17 +212,17 @@ const runQuery = async (req, res) => {
 			location: process.env.PROJECT_LOCATION,
 		};
 
-		// 🧩 Step 4: Log query in development
+		// 🧾 Log in Dev Mode
 		if (process.env.NODE_ENV !== "production") {
 			console.log("\n--- BigQuery Debug Log ---");
 			console.log("Query Name:", queryName);
 			console.log("Table:", tableId);
 			console.log("Generated SQL:\n", finalQuery);
-			console.log("Bound Parameters:", JSON.stringify(params, null, 2));
+			console.log("Parameters:", JSON.stringify(params, null, 2));
 			console.log("----------------------------\n");
 		}
 
-		// 🧩 Step 5ß: Execute query
+		// 🚀 Execute
 		const [job] = await bigquery.createQueryJob(options);
 		const [rows] = await job.getQueryResults();
 
