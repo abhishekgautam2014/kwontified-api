@@ -69,71 +69,127 @@ const getAllTablesAndColumns = async (req, res) => {
 	}
 };
 
-const runQuery = async (req, res) => {
-	const {
-		queryName,
-		startDate = "2025-10-01",
-		endDate = "2025-10-10",
-		page = 1,
-		pageSize = 10,
-		sku,
-		asin,
-		product_title,
-	} = req.query;
+const schemaCache = {};
 
+const getSchema = async (tableId) => {
 	try {
+		if (schemaCache[tableId]) return schemaCache[tableId];
+
+		const [datasetName, tableName] = tableId.split(".");
+		if (!datasetName || !tableName) {
+			throw new Error(
+				`Invalid table identifier: ${tableId}. Expected format dataset.table`
+			);
+		}
+
+		const table = bigquery.dataset(datasetName).table(tableName);
+		const [metadata] = await table.getMetadata();
+
+		const fields = metadata.schema.fields;
+		schemaCache[tableId] = fields; // cache for next time
+		return fields;
+	} catch (err) {
+		console.error("Error fetching schema:", err.message);
+		throw err;
+	}
+};
+
+const runQuery = async (req, res) => {
+	try {
+		const {
+			queryName,
+			startDate = "2025-10-01",
+			endDate = "2025-10-10",
+			page = 1,
+			pageSize = 10,
+			...filters
+		} = req.query;
+
 		if (!queryName || !queries[queryName]) {
 			return res.status(400).json({
 				success: false,
-				message:
-					"Invalid or missing query name parameter. Please provide a valid 'queryName'.",
+				message: "Invalid or missing query name parameter.",
 			});
 		}
 
 		const limit = parseInt(pageSize, 10);
 		const offset = (parseInt(page, 10) - 1) * limit;
 
+		// 🧩 Step 1: Detect table name (expect backtick-wrapped)
+		const queryText = queries[queryName];
+		const tableMatch = queryText.match(/`([^`]+)`/);
+
+		if (!tableMatch) {
+			return res.status(400).json({
+				success: false,
+				message:
+					"Unable to detect table name in query. Ensure it's wrapped in backticks.",
+			});
+		}
+
+		const tableId = tableMatch[1]; // e.g. intentwise_ecommerce_graph.product_summary
+
+		// 🧩 Step 2: Get schema dynamically (cached)
+		const fields = await getSchema(tableId);
+		const validColumns = fields.map((f) => f.name);
+
 		let whereClause = "";
-		const params = {
-			startDate,
-			endDate,
-			limit,
-			offset,
-		};
+		const params = { startDate, endDate, limit, offset };
 
-		if (sku) {
-			whereClause += ` AND sku = @sku`;
-			params.sku = sku;
-		}
-		if (asin) {
-			whereClause += ` AND product = @asin`;
-			params.asin = asin;
-		}
-		if (product_title) {
-			whereClause += ` AND product_title LIKE @product_title`;
-			params.product_title = `%${product_title}%`;
-		}
+		// 🧩 Step 3: Add filters dynamically for only valid columns
+		Object.entries(filters).forEach(([key, value]) => {
+			if (
+				!value ||
+				[
+					"queryName",
+					"startDate",
+					"endDate",
+					"page",
+					"pageSize",
+				].includes(key)
+			)
+				return;
 
-		const query = queries[queryName].replace(
-			"{{where_clause}}",
-			whereClause
-		);
+			if (!validColumns.includes(key)) return; // skip invalid filters
+
+			const fieldType =
+				fields.find((f) => f.name === key)?.type || "STRING";
+
+			if (fieldType === "STRING") {
+				whereClause += ` AND ${key} LIKE @${key}`;
+				params[key] = `%${value}%`;
+			} else {
+				whereClause += ` AND ${key} = @${key}`;
+				params[key] = isNaN(value) ? value : Number(value);
+			}
+		});
+
+		// Replace where placeholder
+		const finalQuery = queryText.replace("{{where_clause}}", whereClause);
 
 		const options = {
-			query,
+			query: finalQuery,
 			params,
 			location: process.env.PROJECT_LOCATION,
 		};
 
+		// 🧩 Step 4: Log query in development
+		if (process.env.NODE_ENV !== "production") {
+			console.log("\n--- BigQuery Debug Log ---");
+			console.log("Query Name:", queryName);
+			console.log("Table:", tableId);
+			console.log("Generated SQL:\n", finalQuery);
+			console.log("Bound Parameters:", JSON.stringify(params, null, 2));
+			console.log("----------------------------\n");
+		}
+
+		// 🧩 Step 5ß: Execute query
 		const [job] = await bigquery.createQueryJob(options);
 		const [rows] = await job.getQueryResults();
 
-		res.json({
-			success: true,
-			data: rows,
-		});
+		res.json({ success: true, data: rows });
 	} catch (error) {
-		console.error(`Error running query ${queryName}:`, error);
+		console.error("Error running query:", error);
 		res.status(500).json({
 			success: false,
 			message: "Failed to execute BigQuery query",
