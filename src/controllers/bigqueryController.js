@@ -138,7 +138,7 @@ const buildSorting = (sortBy, sortOrder, validColumns) => {
 			: "DESC";
 		return `ORDER BY ${sortBy} ${direction}`;
 	}
-	return "ORDER BY total_sales DESC"; // fallback
+	return " "; // fallback
 };
 
 // 🧩 3️⃣ Main Function — runQuery
@@ -148,8 +148,8 @@ const runQuery = async (req, res) => {
 			queryName,
 			startDate = "2025-10-01",
 			endDate = "2025-10-10",
-			page = 1,
-			pageSize = 10,
+			page,
+			pageSize,
 			sortBy,
 			sortOrder = "desc",
 			...filters
@@ -161,9 +161,6 @@ const runQuery = async (req, res) => {
 				message: "Invalid or missing query name parameter.",
 			});
 		}
-
-		const limit = parseInt(pageSize, 10);
-		const offset = (parseInt(page, 10) - 1) * limit;
 
 		const queryText = queries[queryName];
 		const tableMatch = queryText.match(/`([^`]+)`/);
@@ -193,8 +190,6 @@ const runQuery = async (req, res) => {
 		const params = {
 			startDate,
 			endDate,
-			limit,
-			offset,
 			...filterParams,
 		};
 
@@ -204,7 +199,16 @@ const runQuery = async (req, res) => {
 			.replace(/ORDER BY[\s\S]*?(?=LIMIT|$)/i, "")
 			.replace(/LIMIT[\s\S]*/i, "");
 
-		finalQuery += `\n${orderClause}\nLIMIT @limit OFFSET @offset`;
+		finalQuery += `\n${orderClause}`;
+
+		// Add LIMIT and OFFSET if page and pageSize are provided
+		if (page && pageSize) {
+			const limit = parseInt(pageSize, 10);
+			const offset = (parseInt(page, 10) - 1) * limit;
+			finalQuery += `\nLIMIT @limit OFFSET @offset`;
+			params.limit = limit;
+			params.offset = offset;
+		}
 
 		const options = {
 			query: finalQuery,

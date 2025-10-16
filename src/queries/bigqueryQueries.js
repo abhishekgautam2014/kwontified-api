@@ -149,9 +149,7 @@ FROM
   \`intentwise_ecommerce_graph.account_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-GROUP BY report_date
-ORDER BY report_date;
-`;
+GROUP BY report_date ORDER BY report_date desc`;
 
 const acosTacosTrend = `
 SELECT 
@@ -187,14 +185,14 @@ SELECT
   IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
   IFNULL(SUM(ad_spend), 0) AS ad_spend
 FROM 
-  intentwise_ecommerce_graph.product_summary
+  \`intentwise_ecommerce_graph.product_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
 GROUP BY 
   asin, sku
 ORDER BY 
   total_sales DESC
-LIMIT 100;
+LIMIT @limit OFFSET @offset;
 `;
 
 const productSummary = `
