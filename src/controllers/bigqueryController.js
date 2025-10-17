@@ -162,6 +162,28 @@ const runQuery = async (req, res) => {
 			});
 		}
 
+		const combinedQueryNames = ["timeSeriesMetrics", "accountSummary"];
+		if (combinedQueryNames.includes(queryName)) {
+			const queryText = queries[queryName];
+			const params = { startDate, endDate };
+
+			const options = {
+				query: queryText,
+				params,
+				location: process.env.PROJECT_LOCATION,
+			};
+
+			const [job] = await bigquery.createQueryJob(options);
+			const [rows] = await job.getQueryResults();
+
+			const responseData = {};
+			for (const row of rows) {
+				responseData[row.queryName] = JSON.parse(row.results || "[]");
+			}
+
+			return res.json({ success: true, data: responseData });
+		}
+
 		const queryText = queries[queryName];
 		const tableMatch = queryText.match(/`([^`]+)`/);
 		if (!tableMatch) {

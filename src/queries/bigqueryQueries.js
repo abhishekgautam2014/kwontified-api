@@ -224,12 +224,36 @@ WHERE
 
 GROUP BY 
   product_title, sku, product
-
-ORDER BY 
-  total_sales DESC
-
-LIMIT @limit OFFSET @offset;
 `;
+
+const timeSeriesMetrics = `
+    SELECT 'addRevenueTotalSalesTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${addRevenueTotalSalesTrend.replace(
+		/;\s*$/,
+		""
+	)}) AS t
+    UNION ALL
+    SELECT 'acosTacosTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${acosTacosTrend.replace(
+		/;\s*$/,
+		""
+	)}) AS t
+    UNION ALL
+    SELECT 'totalUnitOrderedandSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitOrderedandSales.replace(
+		/;\s*$/,
+		""
+	)}) AS t
+    `;
+
+const accountSummary = `
+    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices.replace(
+		/;\s*$/,
+		""
+	)}) AS t
+    UNION ALL
+    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices.replace(
+		/;\s*$/,
+		""
+	)}) AS t
+    `;
 
 module.exports = {
 	accountSummaryMetrices: accountSummaryMetrices,
@@ -240,4 +264,6 @@ module.exports = {
 	acosTacosTrend: acosTacosTrend,
 	totalUnitOrderedandSales: totalUnitOrderedandSales,
 	productBySales: productBySales,
+	timeSeriesMetrics: timeSeriesMetrics,
+	accountSummary: accountSummary,
 };
