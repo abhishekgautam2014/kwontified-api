@@ -27,6 +27,7 @@ current_period AS (
     SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos
   FROM \`intentwise_ecommerce_graph.account_summary\`, date_ranges
   WHERE report_date BETWEEN date_ranges.start_date AND date_ranges.end_date
+  {{account_id_clause}}
 ),
 
 -- Previous period data (auto calculated range)
@@ -45,6 +46,7 @@ previous_period AS (
     SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos
   FROM \`intentwise_ecommerce_graph.account_summary\`, date_ranges
   WHERE report_date BETWEEN date_ranges.prev_start_date AND date_ranges.prev_end_date
+  {{account_id_clause}}
 )
 
 -- Final output with percentage changes
@@ -93,6 +95,7 @@ current_period AS (
     IFNULL(AVG(refund_rate), 0) AS refund_rate
   FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`, date_ranges
   WHERE sale_date BETWEEN date_ranges.start_date AND date_ranges.end_date
+  {{account_id_clause}}
 ),
 
 -- Step 3: Previous period metrics
@@ -108,6 +111,7 @@ previous_period AS (
     IFNULL(AVG(refund_rate), 0) AS refund_rate
   FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`, date_ranges
   WHERE sale_date BETWEEN date_ranges.prev_start_date AND date_ranges.prev_end_date
+  {{account_id_clause}}
 )
 
 -- Step 4: Combine current & previous metrics + calculate percentage changes
@@ -149,6 +153,7 @@ FROM
   \`intentwise_ecommerce_graph.account_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
+  {{account_id_clause}}
 GROUP BY report_date ORDER BY report_date desc`;
 
 const acosTacosTrend = `
@@ -160,6 +165,7 @@ FROM
   \`intentwise_ecommerce_graph.account_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
+  {{account_id_clause}}
 GROUP BY report_date
 ORDER BY report_date;
 `;
@@ -173,6 +179,7 @@ FROM
   \`intentwise_ecommerce_graph.account_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
+  {{account_id_clause}}
 GROUP BY report_date
 ORDER BY report_date;
 `;
@@ -188,11 +195,9 @@ FROM
   \`intentwise_ecommerce_graph.product_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
+  {{where_clause}}
 GROUP BY 
   asin, sku
-ORDER BY 
-  total_sales DESC
-LIMIT @limit OFFSET @offset;
 `;
 
 const productSummary = `
@@ -226,44 +231,61 @@ GROUP BY
   product_title, sku, product
 `;
 
-const timeSeriesMetrics = `
-    SELECT 'addRevenueTotalSalesTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${addRevenueTotalSalesTrend.replace(
-		/;\s*$/,
-		""
-	)}) AS t
+const getTimeSeriesMetricsQuery = (accountIdClause) => `
+    SELECT 'addRevenueTotalSalesTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${addRevenueTotalSalesTrend
+			.replace("{{account_id_clause}}", accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
     UNION ALL
-    SELECT 'acosTacosTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${acosTacosTrend.replace(
-		/;\s*$/,
-		""
-	)}) AS t
+    SELECT 'acosTacosTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${acosTacosTrend
+			.replace("{{account_id_clause}}", accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
     UNION ALL
-    SELECT 'totalUnitOrderedandSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitOrderedandSales.replace(
-		/;\s*$/,
-		""
-	)}) AS t
-    `;
+    SELECT 'totalUnitOrderedandSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitOrderedandSales
+			.replace("{{account_id_clause}}", accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
+`;
 
-const accountSummary = `
-    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices.replace(
-		/;\s*$/,
-		""
-	)}) AS t
+const getAccountSummaryQuery = (accountIdClause) => `
+    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
+			.replace(/{{account_id_clause}}/g, accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
     UNION ALL
-    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices.replace(
-		/;\s*$/,
-		""
-	)}) AS t
-    `;
+    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
+			.replace(/{{account_id_clause}}/g, accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
+`;
+
+const getDashboardMetricsQuery = (accountIdClause) => `
+    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
+			.replace(/{{account_id_clause}}/g, accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
+			.replace(/{{account_id_clause}}/g, accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'addRevenueTotalSalesTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${addRevenueTotalSalesTrend
+			.replace("{{account_id_clause}}", accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'acosTacosTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${acosTacosTrend
+			.replace("{{account_id_clause}}", accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'totalUnitOrderedandSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitOrderedandSales
+			.replace("{{account_id_clause}}", accountIdClause)
+			.replace(/;\s*$/, "")}) AS t
+`;
 
 module.exports = {
-	accountSummaryMetrices: accountSummaryMetrices,
-	addRevenueTotalSalesTrend: addRevenueTotalSalesTrend,
-	selleCentralMetrices: selleCentralMetrices,
-	acosTacosTrend: acosTacosTrend,
-	productSummary: productSummary,
-	acosTacosTrend: acosTacosTrend,
-	totalUnitOrderedandSales: totalUnitOrderedandSales,
-	productBySales: productBySales,
-	timeSeriesMetrics: timeSeriesMetrics,
-	accountSummary: accountSummary,
+	accountSummaryMetrices,
+	addRevenueTotalSalesTrend,
+	selleCentralMetrices,
+	acosTacosTrend,
+	productSummary,
+	totalUnitOrderedandSales,
+	productBySales,
+	timeSeriesMetrics: getTimeSeriesMetricsQuery,
+	accountSummary: getAccountSummaryQuery,
+	dashboardMetrics: getDashboardMetricsQuery,
 };
