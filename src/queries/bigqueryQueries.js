@@ -24,7 +24,13 @@ current_period AS (
     END AS organic_sales,
     SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
     SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
-    SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos
+    SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos,
+    IFNULL(SUM(ad_impressions), 0) AS impressions,
+    IFNULL(SUM(ad_clicks), 0) AS clicks,
+    SAFE_DIVIDE(SUM(ad_clicks), SUM(ad_impressions)) * 100 AS ctr,
+    SAFE_DIVIDE(SUM(ad_conversions), SUM(ad_clicks)) * 100 AS cvr,
+    SAFE_DIVIDE(SUM(ad_spend), SUM(ad_clicks)) AS avg_cpc,
+    SAFE_DIVIDE(SUM(ad_revenue), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) * 100 AS ad_sales_attribute
   FROM \`intentwise_ecommerce_graph.account_summary\`, date_ranges
   WHERE report_date BETWEEN date_ranges.start_date AND date_ranges.end_date
   {{account_id_clause}}
@@ -43,7 +49,13 @@ previous_period AS (
     END AS organic_sales,
     SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
     SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
-    SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos
+    SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos,
+    IFNULL(SUM(ad_impressions), 0) AS impressions,
+    IFNULL(SUM(ad_clicks), 0) AS clicks,
+    SAFE_DIVIDE(SUM(ad_clicks), SUM(ad_impressions)) * 100 AS ctr,
+    SAFE_DIVIDE(SUM(ad_conversions), SUM(ad_clicks)) * 100 AS cvr,
+    SAFE_DIVIDE(SUM(ad_spend), SUM(ad_clicks)) AS avg_cpc,
+    SAFE_DIVIDE(SUM(ad_revenue), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) * 100 AS ad_sales_attribute
   FROM \`intentwise_ecommerce_graph.account_summary\`, date_ranges
   WHERE report_date BETWEEN date_ranges.prev_start_date AND date_ranges.prev_end_date
   {{account_id_clause}}
@@ -59,6 +71,12 @@ SELECT
   c.acos,
   c.roas,
   c.tacos,
+  c.impressions,
+  c.clicks,
+  c.ctr,
+  c.cvr,
+  c.avg_cpc,
+  c.ad_sales_attribute,
 
   -- % Changes
   SAFE_DIVIDE((c.ad_spend - p.ad_spend), p.ad_spend) * 100 AS ad_spend_change_pct,
@@ -67,7 +85,12 @@ SELECT
   SAFE_DIVIDE((c.organic_sales - p.organic_sales), p.organic_sales) * 100 AS organic_sales_change_pct,
   SAFE_DIVIDE((c.acos - p.acos), p.acos) * 100 AS acos_change_pct,
   SAFE_DIVIDE((c.roas - p.roas), p.roas) * 100 AS roas_change_pct,
-  SAFE_DIVIDE((c.tacos - p.tacos), p.tacos) * 100 AS tacos_change_pct
+  SAFE_DIVIDE((c.tacos - p.tacos), p.tacos) * 100 AS tacos_change_pct,
+  SAFE_DIVIDE((c.impressions - p.impressions), p.impressions) * 100 AS impressions_change_pct,
+  SAFE_DIVIDE((c.clicks - p.clicks), p.clicks) * 100 AS clicks_change_pct,
+  SAFE_DIVIDE((c.ctr - p.ctr), p.ctr) * 100 AS ctr_change_pct,
+  SAFE_DIVIDE((c.cvr - p.cvr), p.cvr) * 100 AS cvr_change_pct,
+  SAFE_DIVIDE((c.avg_cpc - p.avg_cpc), p.avg_cpc) * 100 AS avg_cpc_change_pct
 FROM current_period c, previous_period p;
 `;
 
@@ -233,48 +256,48 @@ GROUP BY
 
 const getTimeSeriesMetricsQuery = (accountIdClause) => `
     SELECT 'addRevenueTotalSalesTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${addRevenueTotalSalesTrend
-			.replace("{{account_id_clause}}", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'acosTacosTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${acosTacosTrend
-			.replace("{{account_id_clause}}", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'totalUnitOrderedandSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitOrderedandSales
-			.replace("{{account_id_clause}}", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
 `;
 
 const getAccountSummaryQuery = (accountIdClause) => `
     SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
-			.replace(/{{account_id_clause}}/g, accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
-			.replace(/{{account_id_clause}}/g, accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
 `;
 
 const getDashboardMetricsQuery = (accountIdClause) => `
     SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
-			.replace(/{{account_id_clause}}/g, accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
-			.replace(/{{account_id_clause}}/g, accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'addRevenueTotalSalesTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${addRevenueTotalSalesTrend
-			.replace("{{account_id_clause}}", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'acosTacosTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${acosTacosTrend
-			.replace("{{account_id_clause}}", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'totalUnitOrderedandSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitOrderedandSales
-			.replace("{{account_id_clause}}", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
 `;
 
 module.exports = {
