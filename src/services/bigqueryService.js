@@ -127,7 +127,7 @@ const runQuery = async (queryParams) => {
 		throw new Error("Invalid or missing query name parameter.");
 	}
 
-	const combinedQueryNames = ["timeSeriesMetrics", "accountSummary", "dashboardMetrics", "advertisingDashboard"];
+	const combinedQueryNames = ["timeSeriesMetrics", "accountSummary", "dashboardMetrics", "advertisingDashboard", "orderDashboard"];
 	let finalQuery, params;
 
 	if (combinedQueryNames.includes(queryName)) {
