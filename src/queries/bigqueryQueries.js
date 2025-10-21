@@ -302,7 +302,7 @@ const getDashboardMetricsQuery = (accountIdClause) => `
 		.replace(/;\s*$/, "")}) AS t
 `;
 
-// campaign summary queries (Advertising Menu)
+//-------------- campaign summary queries (Advertising Menu)-------------------------//
 const impressionsClicksTrend = `
 SELECT 
   FORMAT_DATE('%Y-%m-%d', report_date) AS report_date,
@@ -421,6 +421,70 @@ GROUP BY
   asin, sku, product_title
 `;
 
+const getAdvertisingDashboardQuery = (accountIdClause) => `
+    SELECT 'impressionsClicksTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${impressionsClicksTrend
+		.replace("/* {{account_id_clause}} */", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'cpcwithPrevMonthCpcTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${cpcwithPrevMonthCpcTrend.replace(
+		/;\s*$/,
+		""
+	)}) AS t
+    UNION ALL
+    SELECT 'capmpaignPerformanceTable' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${capmpaignPerformanceTable
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'capmpaignSummaryTable' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${capmpaignSummaryTable
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'sponsoredProductPerformanceTable' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${sponsoredProductPerformanceTable
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+`;
+
+// -----------------------------------Order Dashboard queries ---------------------------------- //
+const orderFulfillment = `
+SELECT 
+  fulfillment_channel, count(fulfillment_channel) AS total_orders
+FROM \`amazon_source_data.sellercentral_ordersbydate_report\`
+WHERE 
+  purchase_date BETWEEN @startDate AND @endDate
+GROUP BY 
+  fulfillment_channel
+`;
+
+const orderedProductPerformance = `
+SELECT 
+  parent_asin, sku, child_asin,
+  IFNULL(SUM(ordered_product_sales_amt), 0) AS total_sales,
+  IFNULL(SUM(total_order_items), 0) AS total_order_items,
+  IFNULL(SUM(units_ordered), 0) AS units_ordered,
+  SAFE_DIVIDE(SUM(ordered_product_sales_amt), SUM(SUM(ordered_product_sales_amt)) OVER ()) AS total_sales_percentage,
+  SAFE_DIVIDE(SUM(total_order_items), SUM(SUM(total_order_items)) OVER ()) AS total_order_items_percentage,
+  SAFE_DIVIDE(SUM(units_ordered), SUM(SUM(units_ordered)) OVER ()) AS units_ordered_percentage
+FROM \`amazon_source_data.sellercentral_salesandtrafficbysku_report\`
+WHERE 
+  sale_date BETWEEN @startDate AND @endDate
+  {{where_clause}}
+GROUP BY 
+  parent_asin, sku, child_asin
+`;
+
+const totalUnitsOrderSales = `
+SELECT 
+  FORMAT_DATE('%Y-%m-%d', sale_date) AS report_date,
+  IFNULL(SUM(ordered_product_sales_amt), 0) AS total_sales,
+  IFNULL(SUM(total_order_items), 0) AS total_order_items,
+  IFNULL(SUM(units_ordered), 0) AS units_ordered
+FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`
+WHERE 
+  sale_date BETWEEN @startDate AND @endDate
+GROUP BY 
+  sale_date
+`;
+
 module.exports = {
 	accountSummaryMetrices,
 	addRevenueTotalSalesTrend,
@@ -434,7 +498,11 @@ module.exports = {
 	capmpaignPerformanceTable,
 	capmpaignSummaryTable,
 	sponsoredProductPerformanceTable,
+	orderedProductPerformance,
+	orderFulfillment,
+	totalUnitsOrderSales,
 	timeSeriesMetrics: getTimeSeriesMetricsQuery,
 	accountSummary: getAccountSummaryQuery,
 	dashboardMetrics: getDashboardMetricsQuery,
+	advertisingDashboard: getAdvertisingDashboardQuery,
 };
