@@ -422,9 +422,17 @@ GROUP BY
 `;
 
 const getAdvertisingDashboardQuery = (accountIdClause) => `
+    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
     SELECT 'impressionsClicksTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${impressionsClicksTrend
-			.replace("/* {{account_id_clause}} */", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("/* {{account_id_clause}} */", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'cpcwithPrevMonthCpcTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${cpcwithPrevMonthCpcTrend.replace(
 		/;\s*$/,
@@ -487,24 +495,24 @@ GROUP BY
 
 const getOrderDashboardQuery = (accountIdClause) => `
     SELECT 'orderFulfillment' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${orderFulfillment
-			.replace("{{where_clause}}", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'orderedProductPerformance' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${orderedProductPerformance
-			.replace("{{where_clause}}", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'totalUnitsOrderSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitsOrderSales
-			.replace("{{where_clause}}", accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
-			.replace(/{{account_id_clause}}/g, accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
     UNION ALL
     SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
-			.replace(/{{account_id_clause}}/g, accountIdClause)
-			.replace(/;\s*$/, "")}) AS t
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
 `;
 
 module.exports = {
