@@ -215,7 +215,7 @@ const productBySales = `
 SELECT 
   product AS asin,
   sku,
-  IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS total_sales,
+  SAFE_CAST(IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS NUMERIC) AS total_sales,
   IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
   IFNULL(SUM(ad_spend), 0) AS ad_spend
 FROM 
