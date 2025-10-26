@@ -182,7 +182,8 @@ WHERE
 GROUP BY report_date ORDER BY report_date desc`;
 
 const acosTacosTrend = `
-SELECT 
+SELECT
+  "percentage" as metric_type, 
   FORMAT_DATE('%Y-%m-%d', report_date) AS report_date,
   SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
   SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos
@@ -196,7 +197,8 @@ ORDER BY report_date;
 `;
 
 const totalUnitOrderedandSales = `
-SELECT 
+SELECT
+  "sum" as metric_type, 
   FORMAT_DATE('%Y-%m-%d', report_date) AS report_date,
   SUM(product_quantity) AS units_ordered,
   SUM(product_sales) + SUM(ordered_revenue) AS total_sales
