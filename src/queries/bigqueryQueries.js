@@ -225,6 +225,8 @@ WHERE
   {{where_clause}}
 GROUP BY 
   asin, sku
+ORDER BY 
+  total_sales DESC
 `;
 
 const productSummary = `
@@ -301,6 +303,10 @@ const getDashboardMetricsQuery = (accountIdClause) => `
     UNION ALL
     SELECT 'totalUnitOrderedandSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitOrderedandSales
 		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+	UNION ALL
+	SELECT 'productBySales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${productBySales
+		.replace("{{where_clause}}", accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
 `;
 
