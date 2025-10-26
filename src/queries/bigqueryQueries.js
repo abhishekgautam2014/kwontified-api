@@ -179,7 +179,7 @@ FROM
 WHERE 
   report_date BETWEEN @startDate AND @endDate
   {{account_id_clause}}
-GROUP BY report_date ORDER BY report_date desc`;
+GROUP BY report_date ORDER BY report_date`;
 
 const acosTacosTrend = `
 SELECT
@@ -215,16 +215,16 @@ const productBySales = `
 SELECT 
   product AS asin,
   sku,
-  SAFE_ADD(SUM(product_sales), SUM(ordered_revenue)) AS total_sales,
+  IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS total_sales,
   IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
   IFNULL(SUM(ad_spend), 0) AS ad_spend
 FROM 
   \`intentwise_ecommerce_graph.product_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  {{where_clause}}
+  AND account_id = @account_id {{where_clause}}
 GROUP BY 
-  asin, sku
+  product, sku
 ORDER BY 
   total_sales DESC
 `;
@@ -306,7 +306,7 @@ const getDashboardMetricsQuery = (accountIdClause) => `
 		.replace(/;\s*$/, "")}) AS t
 	UNION ALL
 	SELECT 'productBySales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${productBySales
-		.replace("{{where_clause}}", accountIdClause)
+		.replace("{{where_clause}}", "")
 		.replace(/;\s*$/, "")}) AS t
 `;
 
