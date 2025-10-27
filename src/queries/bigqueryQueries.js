@@ -359,8 +359,7 @@ previous_period AS (
 SELECT
   FORMAT_DATE('%Y-%m-%d', c.report_date) AS report_date,
   c.cpc AS current_cpc,
-  p.prev_cpc AS previous_cpc,
-  SAFE_DIVIDE(c.cpc - p.prev_cpc, p.prev_cpc) * 100 AS cpc_change_pct
+  p.prev_cpc AS previous_cpc
 FROM current_period c
 LEFT JOIN previous_period p
   ON DATE_SUB(c.report_date, INTERVAL 1 MONTH) = p.report_date
