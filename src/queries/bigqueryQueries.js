@@ -430,33 +430,64 @@ GROUP BY
 `;
 
 const getAdvertisingDashboardQuery = (accountIdClause) => `
-    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
+    SELECT 'accountSummaryMetrices' AS queryName, 
+           '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results 
+    FROM (${accountSummaryMetrices
 		.replace(/{{account_id_clause}}/g, accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
+
     UNION ALL
-    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
+
+    SELECT 'selleCentralMetrices' AS queryName, 
+           '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results 
+    FROM (${selleCentralMetrices
 		.replace(/{{account_id_clause}}/g, accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
+
     UNION ALL
-    SELECT 'impressionsClicksTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${impressionsClicksTrend
+
+    SELECT 'impressionsClicksTrend' AS queryName, 
+           '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results 
+    FROM (${impressionsClicksTrend
 		.replace("/* {{account_id_clause}} */", accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
+
     UNION ALL
-    SELECT 'cpcwithPrevMonthCpcTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${cpcwithPrevMonthCpcTrend.replace(
-		/;\s*$/,
-		""
-	)}) AS t
+
+    SELECT 'cpcwithPrevMonthCpcTrend' AS queryName, 
+           '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results 
+    FROM (${cpcwithPrevMonthCpcTrend.replace(/;\s*$/, "")}) AS t
+
     UNION ALL
-    SELECT 'capmpaignPerformanceTable' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${capmpaignPerformanceTable
+
+    SELECT 'capmpaignPerformanceTable' AS queryName, 
+           '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results 
+    FROM (${capmpaignPerformanceTable
 		.replace("{{where_clause}}", accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
+
     UNION ALL
-    SELECT 'capmpaignSummaryTable' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${capmpaignSummaryTable
+
+    SELECT 'capmpaignSummaryTable' AS queryName, 
+           '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results 
+    FROM (${capmpaignSummaryTable
 		.replace("{{where_clause}}", accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
+
     UNION ALL
-    SELECT 'sponsoredProductPerformanceTable' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${sponsoredProductPerformanceTable
+
+    SELECT 'sponsoredProductPerformanceTable' AS queryName, 
+           '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results 
+    FROM (${sponsoredProductPerformanceTable
 		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+
+    UNION ALL
+
+    SELECT 'addRevenueTotalSalesTrend' AS queryName, 
+           '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results 
+    FROM (${addRevenueTotalSalesTrend
+		.replace(/{{account_id_clause}}/g, accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
 `;
 
