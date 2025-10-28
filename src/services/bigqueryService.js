@@ -65,6 +65,7 @@ const buildFilters = (filters, validColumns, fields, account_id) => {
 				"queryName",
 				"startDate",
 				"endDate",
+				"total_sales",
 				"page",
 				"pageSize",
 				"sortBy",
@@ -91,10 +92,9 @@ const buildFilters = (filters, validColumns, fields, account_id) => {
 };
 
 // 🧩 2️⃣ Build ORDER BY clause dynamically
-const buildSorting = (sortBy, sortOrder, validColumns) => {
-	if (sortBy && validColumns.includes(sortBy)) {
-		const direction = ["asc", "desc"].includes(sortOrder?.toLowerCase()) ? sortOrder.toUpperCase() : "DESC";
-		return `ORDER BY ${sortBy} ${direction}`;
+const buildSorting = (sortBy, sortOrder) => {
+	if (sortBy && sortOrder) {
+		return `ORDER BY ${sortBy} ${sortOrder}`;
 	}
 	return " "; // fallback
 };
@@ -127,7 +127,13 @@ const runQuery = async (queryParams) => {
 		throw new Error("Invalid or missing query name parameter.");
 	}
 
-	const combinedQueryNames = ["timeSeriesMetrics", "accountSummary", "dashboardMetrics", "advertisingDashboard", "orderDashboard"];
+	const combinedQueryNames = [
+		"timeSeriesMetrics",
+		"accountSummary",
+		"dashboardMetrics",
+		"advertisingDashboard",
+		"orderDashboard",
+	];
 	let finalQuery, params;
 
 	if (combinedQueryNames.includes(queryName)) {
@@ -153,7 +159,8 @@ const runQuery = async (queryParams) => {
 			fields,
 			account_id
 		);
-		const orderClause = buildSorting(sortBy, sortOrder, validColumns);
+
+		const orderClause = buildSorting(sortBy, sortOrder);
 
 		params = {
 			startDate,
