@@ -233,18 +233,19 @@ SELECT
   sku,
   product AS asin,
 
-  IFNULL(SUM(ad_spend), 0) AS ad_spend,
-  IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
+  CAST(IFNULL(SUM(ad_spend), 0) AS FLOAT64) AS ad_spend,
+  CAST(IFNULL(SUM(ad_revenue), 0) AS FLOAT64) AS ad_revenue,
 
-  SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
-  SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
-  IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS total_sales,
+  CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS FLOAT64) AS roas,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS FLOAT64) AS acos,
+  CAST(IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS FLOAT64) AS total_sales,
 
-  SAFE_DIVIDE(
+
+  CAST(SAFE_DIVIDE(
     SUM(ad_spend),
     (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0))
-  ) AS tacos,
-  
+  ) AS FLOAT64) AS tacos,
+
   COUNT(*) OVER() AS total_count
 
 FROM 
