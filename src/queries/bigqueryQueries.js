@@ -173,13 +173,13 @@ FROM current_period c, previous_period p;
 const addRevenueTotalSalesTrend = `
 SELECT 
   FORMAT_DATE('%Y-%m-%d', report_date) AS report_date,
-  SUM(ad_revenue) AS ad_revenue,
-  SUM(ad_spend) AS ad_spend,
-  SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
-  SUM(product_sales) + SUM(ordered_revenue) AS total_sales,
+  CAST(SUM(ad_revenue) AS FLOAT64) AS ad_revenue,
+  CAST(SUM(ad_spend) AS FLOAT64) AS ad_spend,
+  CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS FLOAT64) AS roas,
+  CAST(SUM(product_sales) + SUM(ordered_revenue) AS FLOAT64) AS total_sales,
   CASE 
     WHEN (SUM(product_sales) + SUM(ordered_revenue)) - SUM(ad_revenue) > 0 
-      THEN (SUM(product_sales) + SUM(ordered_revenue)) - SUM(ad_revenue)
+      THEN CAST(SUM(product_sales) + SUM(ordered_revenue) AS FLOAT64) - CAST(SUM(ad_revenue) AS FLOAT64)
     ELSE 0 
   END AS organic_sales
 FROM 
@@ -192,8 +192,8 @@ GROUP BY report_date ORDER BY report_date`;
 const acosTacosTrend = `
 SELECT
   FORMAT_DATE('%Y-%m-%d', report_date) AS report_date,
-  SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
-  SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS tacos
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS FLOAT64) AS acos,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(ordered_revenue), 0))) AS FLOAT64) AS tacos
 FROM 
   \`intentwise_ecommerce_graph.account_summary\`
 WHERE 
@@ -207,7 +207,7 @@ const totalUnitOrderedandSales = `
 SELECT
   FORMAT_DATE('%Y-%m-%d', report_date) AS report_date,
   SUM(product_quantity) AS units_ordered,
-  SUM(product_sales) + SUM(ordered_revenue) AS total_sales
+  CAST(SUM(product_sales) + SUM(ordered_revenue) AS FLOAT64) AS total_sales
 FROM 
   \`intentwise_ecommerce_graph.account_summary\`
 WHERE 
@@ -221,9 +221,9 @@ const productBySales = `
 SELECT 
   product AS asin,
   sku,
-  SAFE_CAST(IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS NUMERIC) AS total_sales,
-  IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
-  IFNULL(SUM(ad_spend), 0) AS ad_spend
+  CAST(IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS FLOAT64) AS total_sales,
+  CAST(IFNULL(SUM(ad_revenue), 0) AS FLOAT64) AS ad_revenue,
+  CAST(IFNULL(SUM(ad_spend), 0) AS FLOAT64) AS ad_spend
 FROM 
   \`intentwise_ecommerce_graph.product_summary\`
 WHERE 
