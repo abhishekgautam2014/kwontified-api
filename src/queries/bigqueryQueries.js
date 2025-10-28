@@ -347,7 +347,7 @@ date_ranges AS (
 current_period AS (
   SELECT 
     report_date,
-    SAFE_DIVIDE(SUM(ad_spend), SUM(ad_clicks)) AS cpc
+    CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_clicks)) AS FLOAT64) AS cpc
   FROM \`intentwise_ecommerce_graph.account_summary\`, date_ranges
   WHERE report_date BETWEEN date_ranges.start_date AND date_ranges.end_date
     /* {{account_id_clause}} */
@@ -358,7 +358,7 @@ current_period AS (
 previous_period AS (
   SELECT 
     report_date,
-    SAFE_DIVIDE(SUM(ad_spend), SUM(ad_clicks)) AS prev_cpc
+    CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_clicks)) AS FLOAT64) AS prev_cpc
   FROM \`intentwise_ecommerce_graph.account_summary\`, date_ranges
   WHERE report_date BETWEEN date_ranges.prev_start_date AND date_ranges.prev_end_date
     /* {{account_id_clause}} */
