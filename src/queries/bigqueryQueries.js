@@ -237,7 +237,7 @@ SELECT
   IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
 
   SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
-
+  SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
   IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS total_sales,
 
   SAFE_DIVIDE(
@@ -253,9 +253,10 @@ FROM
 WHERE 
   report_date BETWEEN @startDate AND @endDate
   {{where_clause}}
-
 GROUP BY 
   product_title, sku, product
+ORDER BY 
+  total_sales DESC
 `;
 
 const getTimeSeriesMetricsQuery = (accountIdClause) => `
