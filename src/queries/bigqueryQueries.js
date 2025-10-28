@@ -379,12 +379,12 @@ ORDER BY c.report_date;
 const capmpaignPerformanceTable = `
 SELECT 
   campaign_type,
-  IFNULL(SUM(ad_spend), 0) AS ad_spend,
-  IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
-  SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
-  SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
-  SAFE_DIVIDE(SUM(ad_spend), SUM(SUM(ad_spend)) OVER ()) AS ad_spend_percentage,
-  SAFE_DIVIDE(SUM(ad_revenue), SUM(SUM(ad_revenue)) OVER ()) AS ad_revenue_percentage
+  CAST(IFNULL(SUM(ad_spend), 0) AS FLOAT64) AS ad_spend,
+  CAST(IFNULL(SUM(ad_revenue), 0) AS FLOAT64) AS ad_revenue,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS FLOAT64) AS acos,
+  CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS FLOAT64) AS roas,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(SUM(ad_spend)) OVER ()) AS FLOAT64) AS ad_spend_percentage,
+  CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(SUM(ad_revenue)) OVER ()) AS FLOAT64) AS ad_revenue_percentage
 FROM 
   \`intentwise_ecommerce_graph.campaign_summary\`
 WHERE 
@@ -397,16 +397,16 @@ GROUP BY
 const capmpaignSummaryTable = `
 SELECT 
   campaign_type,
-  IFNULL(SUM(ad_spend), 0) AS ad_spend,
-  IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
-  SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
-  SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
-  SAFE_DIVIDE(SUM(ad_spend), SUM(SUM(ad_spend)) OVER ()) AS ad_spend_percentage,
-  SAFE_DIVIDE(SUM(ad_revenue), SUM(SUM(ad_revenue)) OVER ()) AS ad_revenue_percentage,
-  IFNULL(SUM(ad_impressions), 0) AS ad_impressions,
-  IFNULL(SUM(ad_clicks), 0) AS ad_clicks,
-  SAFE_DIVIDE(SUM(ad_clicks), SUM(ad_impressions)) * 100 AS ctr,
-  SAFE_DIVIDE(SUM(ad_spend), SUM(ad_clicks)) AS avg_cpc
+  CAST(IFNULL(SUM(ad_spend), 0) AS FLOAT64) AS ad_spend,
+  CAST(IFNULL(SUM(ad_revenue), 0) AS FLOAT64) AS ad_revenue,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS FLOAT64) AS acos,
+  CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS FLOAT64) AS roas,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(SUM(ad_spend)) OVER ()) AS FLOAT64) AS ad_spend_percentage,
+  CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(SUM(ad_revenue)) OVER ()) AS FLOAT64) AS ad_revenue_percentage,
+  CAST(IFNULL(SUM(ad_impressions), 0) AS FLOAT64) AS ad_impressions,
+  CAST(IFNULL(SUM(ad_clicks), 0) AS FLOAT64) AS ad_clicks,
+  CAST(SAFE_DIVIDE(SUM(ad_clicks), SUM(ad_impressions)) * 100 AS FLOAT64) AS ctr,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_clicks)) AS FLOAT64) AS avg_cpc
 FROM 
   \`intentwise_ecommerce_graph.campaign_summary\`
 WHERE 
@@ -421,10 +421,10 @@ SELECT
   product AS asin,
   product_title,
   sku,
-  IFNULL(SUM(ad_revenue), 0) AS ad_revenue,
-  IFNULL(SUM(ad_spend), 0) AS ad_spend,
-  SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS acos,
-  SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
+  CAST(IFNULL(SUM(ad_revenue), 0) AS FLOAT64) AS ad_revenue,
+  CAST(IFNULL(SUM(ad_spend), 0) AS FLOAT64) AS ad_spend,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS FLOAT64) AS acos,
+  CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS FLOAT64) AS roas,
   IFNULL(SUM(ad_impressions), 0) AS ad_impressions,
   IFNULL(SUM(ad_clicks), 0) AS ad_clicks
 FROM 
