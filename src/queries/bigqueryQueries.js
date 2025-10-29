@@ -378,13 +378,27 @@ ORDER BY c.report_date;
 
 const capmpaignPerformanceTable = `
 SELECT 
-  campaign_type,
+  CASE 
+    WHEN campaign_type = 'SP M PT' THEN 'Sponsored Products - Product Targeting'
+    WHEN campaign_type = 'SP M KT' THEN 'Sponsored Products - Keyword Targeting'
+    WHEN campaign_type = 'SB M PT' THEN 'Sponsored Brands - Product Targeting'
+    WHEN campaign_type = 'SP A' THEN 'Sponsored Products - Auto Targeting'
+    WHEN campaign_type = 'SB M KT' THEN 'Sponsored Brands - Keyword Targeting'
+    WHEN campaign_type = 'SB M V' THEN 'Sponsored Brands - Video'
+    WHEN campaign_type = 'SD PT' THEN 'Sponsored Display - Product Targeting'
+    WHEN campaign_type = 'SD A' THEN 'Sponsored Display - Audiences'
+    WHEN campaign_type = 'SB M V PT' THEN 'Sponsored Brands - Video - Product Targeting'
+    WHEN campaign_type = 'SP M KT, SP M PT' THEN 'Sponsored Products - Keyword/Product Targeting'
+    ELSE 'Other'
+  END AS campaign_type,
+
   CAST(IFNULL(SUM(ad_spend), 0) AS FLOAT64) AS ad_spend,
   CAST(IFNULL(SUM(ad_revenue), 0) AS FLOAT64) AS ad_revenue,
   CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS FLOAT64) AS acos,
   CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS FLOAT64) AS roas,
   CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(SUM(ad_spend)) OVER ()) AS FLOAT64) AS ad_spend_percentage,
   CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(SUM(ad_revenue)) OVER ()) AS FLOAT64) AS ad_revenue_percentage
+
 FROM 
   \`intentwise_ecommerce_graph.campaign_summary\`
 WHERE 
@@ -392,11 +406,14 @@ WHERE
   {{where_clause}}
 GROUP BY 
   campaign_type
+ORDER BY 
+  ad_revenue DESC;
+
 `;
 
 const capmpaignSummaryTable = `
 SELECT 
-  campaign_type,
+  campaign_name,
   CAST(IFNULL(SUM(ad_spend), 0) AS FLOAT64) AS ad_spend,
   CAST(IFNULL(SUM(ad_revenue), 0) AS FLOAT64) AS ad_revenue,
   CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS FLOAT64) AS acos,
@@ -413,7 +430,8 @@ WHERE
   report_date BETWEEN @startDate AND @endDate
   {{where_clause}}
 GROUP BY 
-  campaign_type
+  campaign_name
+ORDER BY ad_revenue desc
 `;
 
 const sponsoredProductPerformanceTable = `
