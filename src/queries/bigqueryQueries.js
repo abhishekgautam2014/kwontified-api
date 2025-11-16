@@ -837,6 +837,30 @@ const get12monthSalesQuery = (accountIdClause) => `
 		.replace(/;\s*$/, "")}) AS t
 `;
 
+//Advertising Targetting Analysis Queries
+const spendByBrand = `
+SELECT 
+  CASE 
+    WHEN is_brand_term = TRUE THEN "Brand" 
+    ELSE "Non Brand" 
+  END AS brand_type,
+  
+  CAST(IFNULL(SUM(ad_spend), 0) AS FLOAT64) AS ad_spend
+
+FROM 
+  \`intentwise_ecommerce_graph.searchterm_summary\`
+
+WHERE 
+  report_date BETWEEN @startDate AND @endDate
+  AND account_id = @account_id
+  {{where_clause}}
+
+GROUP BY 
+  brand_type
+ORDER BY 
+  brand_type;
+`;
+
 module.exports = {
 	accountSummaryMetrices,
 	addRevenueTotalSalesTrend,
@@ -864,4 +888,5 @@ module.exports = {
 	advertisingDashboard: getAdvertisingDashboardQuery,
 	orderDashboard: getOrderDashboardQuery,
 	"12monthSales": get12monthSalesQuery,
+	spendByBrand,
 };
