@@ -135,6 +135,8 @@ const runQuery = async (queryParams) => {
 		"orderDashboard",
 		"yearlyMonthSalesDashboardMetrics",
 		"12monthSales",
+		"salesPeriodicComparision",
+		"advertisingTargetingAnalysis",
 	];
 	let finalQuery, params;
 

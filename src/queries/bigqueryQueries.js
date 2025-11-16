@@ -1041,6 +1041,44 @@ ORDER BY
   ad_revenue DESC;
 `;
 
+const getAdvertisingTargetingAnalysisQuery = (accountIdClause) => `
+    SELECT 'spendByBrand' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${spendByBrand
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'revenueByBrand' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${revenueByBrand
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'roasByBrand' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${roasByBrand
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'brandOverview' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${brandOverview
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'spendByMatchType' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${spendByMatchType
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'revenueByMatchType' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${revenueByMatchType
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'roasByMatchType' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${roasByMatchType
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'matchTypeOverview' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${matchTypeOverview
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'keywordSummary' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${keywordSummary
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+`;
+
 module.exports = {
 	accountSummaryMetrices,
 	addRevenueTotalSalesTrend,
@@ -1068,6 +1106,7 @@ module.exports = {
 	advertisingDashboard: getAdvertisingDashboardQuery,
 	orderDashboard: getOrderDashboardQuery,
 	"12monthSales": get12monthSalesQuery,
+	advertisingTargetingAnalysis: getAdvertisingTargetingAnalysisQuery,
 	spendByBrand,
 	revenueByBrand,
 	roasByBrand,
