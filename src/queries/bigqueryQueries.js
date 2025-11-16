@@ -883,6 +883,87 @@ GROUP BY
 ORDER BY 
   brand_type;
 `;
+//     SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
+const roasByBrand = `
+SELECT 
+  CASE 
+    WHEN is_brand_term = TRUE THEN "Brand" 
+    ELSE "Non Brand" 
+  END AS brand_type,
+  
+  SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas
+FROM 
+  \`intentwise_ecommerce_graph.searchterm_summary\`
+
+WHERE 
+  report_date BETWEEN @startDate AND @endDate
+  AND account_id = @account_id
+  {{where_clause}}
+
+GROUP BY 
+  brand_type
+ORDER BY 
+  brand_type;
+`;
+
+const spendByMatchType = `
+SELECT 
+  match_type,
+  
+  CAST(IFNULL(SUM(ad_spend), 0) AS FLOAT64) AS ad_spend
+
+FROM 
+  \`intentwise_ecommerce_graph.searchterm_summary\`
+
+WHERE 
+  report_date BETWEEN @startDate AND @endDate
+  AND account_id = @account_id
+  {{where_clause}}
+
+GROUP BY 
+  match_type
+ORDER BY 
+  match_type;
+`;
+
+const revenueByMatchType = `
+SELECT 
+  match_type,
+  
+  CAST(IFNULL(SUM(ad_revenue), 0) AS FLOAT64) AS ad_revenue
+
+FROM 
+  \`intentwise_ecommerce_graph.searchterm_summary\`
+
+WHERE 
+  report_date BETWEEN @startDate AND @endDate
+  AND account_id = @account_id
+  {{where_clause}}
+
+GROUP BY 
+  match_type
+ORDER BY 
+  match_type;
+`;
+//     SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas,
+const roasByMatchType = `
+SELECT 
+  match_type,
+  
+  SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS roas
+FROM 
+  \`intentwise_ecommerce_graph.searchterm_summary\`
+
+WHERE 
+  report_date BETWEEN @startDate AND @endDate
+  AND account_id = @account_id
+  {{where_clause}}
+
+GROUP BY 
+  match_type
+ORDER BY 
+  match_type;
+`;
 
 module.exports = {
 	accountSummaryMetrices,
@@ -913,4 +994,8 @@ module.exports = {
 	"12monthSales": get12monthSalesQuery,
 	spendByBrand,
 	revenueByBrand,
+	roasByBrand,
+	spendByMatchType,
+	revenueByMatchType,
+	roasByMatchType,
 };
