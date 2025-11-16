@@ -520,6 +520,32 @@ const getDashboardMetricsQuery = (accountIdClause) => `
 		.replace(/;\s*$/, "")}) AS t
 `;
 
+const getYearlyMonthSalesDashboardMetricsQuery = (accountIdClause) => `
+    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'addRevenueTotalSalesTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${addRevenueTotalSalesTrend
+		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'acosTacosTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${acosTacosTrend
+		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'totalUnitOrderedandSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitOrderedandSales
+		.replace("{{account_id_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+	UNION ALL
+	SELECT 'productBySales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${productBySales
+		.replace("{{where_clause}}", "")
+		.replace(/;\s*$/, "")}) AS t
+`;
+
 //-------------- campaign summary queries (Advertising Menu)-------------------------//
 const impressionsClicksTrend = `
 SELECT 
@@ -781,6 +807,36 @@ const getOrderDashboardQuery = (accountIdClause) => `
 		.replace(/;\s*$/, "")}) AS t
 `;
 
+const get12monthSalesQuery = (accountIdClause) => `
+    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'totalSalesByWeek' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalSalesByWeek
+		.replace("/* {{account_id_clause}} */", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'totalSalesByMonth' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalSalesByMonth
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'productSummary' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${productSummary
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'weeklyTotalSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${weeklyTotalSales
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'monthlyTotalSales' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${monthlyTotalSales
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+`;
+
 module.exports = {
 	accountSummaryMetrices,
 	addRevenueTotalSalesTrend,
@@ -804,6 +860,8 @@ module.exports = {
 	timeSeriesMetrics: getTimeSeriesMetricsQuery,
 	accountSummary: getAccountSummaryQuery,
 	dashboardMetrics: getDashboardMetricsQuery,
+	yearlyMonthSalesDashboardMetrics: getYearlyMonthSalesDashboardMetricsQuery,
 	advertisingDashboard: getAdvertisingDashboardQuery,
 	orderDashboard: getOrderDashboardQuery,
+	"12monthSales": get12monthSalesQuery,
 };
