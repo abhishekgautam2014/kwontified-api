@@ -406,7 +406,7 @@ SELECT
   CAST(SUM(ad_spend) AS FLOAT64) AS ad_spend,
 
   -- ACOS % = (ad_spend / ad_revenue) * 100
-  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) * 100 AS FLOAT64) AS acos_percentage,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) * 100 AS FLOAT64) AS acos,
 
   -- ROAS = ad_revenue / ad_spend
   CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS FLOAT64) AS roas,
@@ -418,7 +418,7 @@ SELECT
       IFNULL(SUM(product_sales),0) + IFNULL(SUM(shipped_revenue),0)
     ) * 100 
     AS FLOAT64
-  ) AS tacos_percentage
+  ) AS tacos
 
 FROM weekly_data
 GROUP BY 
