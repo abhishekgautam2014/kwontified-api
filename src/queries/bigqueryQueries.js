@@ -245,14 +245,14 @@ SELECT
   CAST(IFNULL(SUM(ad_revenue), 0) AS FLOAT64) AS ad_revenue,
 
   CAST(SAFE_DIVIDE(SUM(ad_revenue), SUM(ad_spend)) AS FLOAT64) AS roas,
-  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS FLOAT64) AS acos,
+  CAST(SAFE_DIVIDE(SUM(ad_spend), SUM(ad_revenue)) AS FLOAT64) AS acos_percentage,
   CAST(IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0) AS FLOAT64) AS total_sales,
 
 
   CAST(SAFE_DIVIDE(
     SUM(ad_spend),
     (IFNULL(SUM(product_sales), 0) + IFNULL(SUM(shipped_revenue), 0))
-  ) AS FLOAT64) AS tacos,
+  ) AS FLOAT64) AS tacos_percentage,
 
   COUNT(*) OVER() AS total_count
 
