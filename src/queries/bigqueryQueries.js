@@ -1101,7 +1101,7 @@ ORDER BY
 
 const orderShipmentStatus = `
 SELECT 
-count(*), order_status
+count(*) as order_count, order_status
 FROM 
   \`amazon_source_data.sellercentral_ordersbydate_report\`
 WHERE 
