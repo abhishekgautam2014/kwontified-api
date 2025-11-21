@@ -1079,6 +1079,75 @@ const getAdvertisingTargetingAnalysisQuery = (accountIdClause) => `
 		.replace(/;\s*$/, "")}) AS t
 `;
 
+// Order | Shipped Orders Queries
+
+const orderShipmentStatusList = `
+SELECT 
+FORMAT_DATE('%Y-%m-%d', purchase_date) AS purchase_date, amazon_order_id, order_status, fulfillment_channel, item_status, product_name, sku, asin,
+CAST(sum(quantity) AS FLOAT64) AS quantity, 
+CAST(sum(item_price) AS FLOAT64) AS item_price, 
+CAST(sum(item_promotion_discount) AS FLOAT64) as item_promotion_discount, 
+CAST(sum(item_tax) AS FLOAT64) as item_tax
+FROM 
+  \`amazon_source_data.sellercentral_ordersbydate_report\`
+WHERE 
+  purchase_date BETWEEN @startDate AND @endDate
+  AND account_id = @account_id
+GROUP BY 
+  purchase_date, amazon_order_id, order_status, fulfillment_channel, item_status, product_name, sku, asin
+ORDER BY 
+  purchase_date DESC
+`;
+
+const orderShipmentStatus = `
+SELECT 
+count(*), order_status
+FROM 
+  \`amazon_source_data.sellercentral_ordersbydate_report\`
+WHERE 
+  purchase_date BETWEEN @startDate AND @endDate
+  AND account_id = @account_id
+GROUP BY 
+  order_status
+`;
+
+const totalUnitsOrdered = `
+SELECT 
+  sum(units_ordered) AS units_ordered,
+  sum(total_order_items) AS total_order_items,
+  CAST(sum(ordered_product_sales_amt) AS FLOAT64)  AS total_sales,
+  FORMAT_DATE('%Y-%m-%d', sale_date) AS sale_date
+FROM 
+  \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`
+WHERE 
+  sale_date BETWEEN @startDate AND @endDate
+  AND account_id = @account_id
+GROUP BY 
+  sale_date
+`;
+
+const getShippmentOrderDashboardQuery = (accountIdClause) => `
+    SELECT 'orderShipmentStatusList' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${orderShipmentStatusList
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'orderShipmentStatus' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${orderShipmentStatus
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'totalUnitsOrdered' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${totalUnitsOrdered
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+`;
+
 module.exports = {
 	accountSummaryMetrices,
 	addRevenueTotalSalesTrend,
@@ -1107,6 +1176,7 @@ module.exports = {
 	orderDashboard: getOrderDashboardQuery,
 	"12monthSales": get12monthSalesQuery,
 	advertisingTargetingAnalysis: getAdvertisingTargetingAnalysisQuery,
+	shippmentOrderDashboard: getShippmentOrderDashboardQuery,
 	spendByBrand,
 	revenueByBrand,
 	roasByBrand,
@@ -1116,4 +1186,7 @@ module.exports = {
 	roasByMatchType,
 	matchTypeOverview,
 	keywordSummary,
+	orderShipmentStatus,
+	orderShipmentStatusList,
+	totalUnitsOrdered,
 };
