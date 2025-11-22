@@ -48,6 +48,7 @@ const {
 	trafficSessionsPageviewsQuery,
 } = require("./trafficQueries");
 
+const { getAllAccounts } = require("./accountSummaryQueries");
 // This file contains all the BigQuery queries used in the application.
 
 const getTimeSeriesMetricsQuery = (accountIdClause) => `
@@ -336,4 +337,5 @@ module.exports = {
 	buyBoxPercentageTrend: buyBoxPercentageTrendQuery,
 	trafficProductPerformanceTable: trafficProductPerformanceTableQuery,
 	trafficSessionsPageviews: trafficSessionsPageviewsQuery,
+	allAccounts: getAllAccounts,
 };
