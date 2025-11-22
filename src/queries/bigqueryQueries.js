@@ -42,6 +42,12 @@ const {
 	sponsoredProductPerformanceTable,
 } = require("./campiagnSummaryQueries");
 
+const {
+	buyBoxPercentageTrendQuery,
+	trafficProductPerformanceTableQuery,
+	trafficSessionsPageviewsQuery,
+} = require("./trafficQueries");
+
 // This file contains all the BigQuery queries used in the application.
 
 const getTimeSeriesMetricsQuery = (accountIdClause) => `
@@ -294,6 +300,28 @@ const getShippmentOrderDashboardQuery = (accountIdClause) => `
 		.replace(/;\s*$/, "")}) AS t
 `;
 
+const getTrafficDashboardQuery = (accountIdClause) => `
+    SELECT 'buyBoxPercentageTrendQuery' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${buyBoxPercentageTrendQuery
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'trafficProductPerformanceTableQuery' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${trafficProductPerformanceTableQuery
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'trafficSessionsPageviewsQuery' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${trafficSessionsPageviewsQuery
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'accountSummaryMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${accountSummaryMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'selleCentralMetrices' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${selleCentralMetrices
+		.replace(/{{account_id_clause}}/g, accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+`;
+
 module.exports = {
 	timeSeriesMetrics: getTimeSeriesMetricsQuery,
 	accountSummary: getAccountSummaryQuery,
@@ -304,4 +332,8 @@ module.exports = {
 	"12monthSales": get12monthSalesQuery,
 	advertisingTargetingAnalysis: getAdvertisingTargetingAnalysisQuery,
 	shippmentOrderDashboard: getShippmentOrderDashboardQuery,
+	trafficDashboard: getTrafficDashboardQuery,
+	buyBoxPercentageTrend: buyBoxPercentageTrendQuery,
+	trafficProductPerformanceTable: trafficProductPerformanceTableQuery,
+	trafficSessionsPageviews: trafficSessionsPageviewsQuery,
 };

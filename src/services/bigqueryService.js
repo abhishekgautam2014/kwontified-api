@@ -138,6 +138,7 @@ const runQuery = async (queryParams) => {
 		"salesPeriodicComparision",
 		"advertisingTargetingAnalysis",
 		"shippmentOrderDashboard",
+		"trafficDashboard",
 	];
 	let finalQuery, params;
 
