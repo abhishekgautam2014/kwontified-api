@@ -79,7 +79,8 @@ const runQuery = async (req, res) => {
 			});
 		}
 
-		const data = await bigqueryService.runQuery(req.query);
+		const queryParams = { ...req.query, ...req.params };
+		const data = await bigqueryService.runQuery(queryParams);
 		res.json({ success: true, data });
 	} catch (error) {
 		console.error("Error running query:", error);

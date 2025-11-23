@@ -2,11 +2,11 @@ const express = require("express");
 const router = express.Router();
 const bigQueryController = require("../controllers/bigqueryController");
 
-router.get("/test-connection", bigQueryController.testConnection);
+router.get("/", bigQueryController.testConnection);
 router.get(
-	"/all-tables-and-columns",
+	"/tables",
 	bigQueryController.getAllTablesAndColumns
 );
-router.get("/account-summary/metrices", bigQueryController.runQuery);
+router.get("/metrics/:queryName", bigQueryController.runQuery);
 
 module.exports = router;

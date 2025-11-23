@@ -6,6 +6,7 @@ SELECT
 FROM \`amazon_source_data.sellercentral_ordersbydate_report\`
 WHERE 
   purchase_date BETWEEN @startDate AND @endDate
+  {{where_clause}}
 GROUP BY 
   fulfillment_channel
 `;
@@ -36,6 +37,7 @@ SELECT
 FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`
 WHERE 
   sale_date BETWEEN @startDate AND @endDate
+  {{where_clause}}
 GROUP BY 
   sale_date
 `;
@@ -53,7 +55,7 @@ FROM
   \`amazon_source_data.sellercentral_ordersbydate_report\`
 WHERE 
   purchase_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  {{where_clause}}
 GROUP BY 
   purchase_date, amazon_order_id, order_status, fulfillment_channel, item_status, product_name, sku, asin
 ORDER BY 
@@ -67,7 +69,7 @@ FROM
   \`amazon_source_data.sellercentral_ordersbydate_report\`
 WHERE 
   purchase_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  {{where_clause}}
 GROUP BY 
   order_status
 `;
@@ -82,7 +84,7 @@ FROM
   \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`
 WHERE 
   sale_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  {{where_clause}}
 GROUP BY 
   sale_date
 `;

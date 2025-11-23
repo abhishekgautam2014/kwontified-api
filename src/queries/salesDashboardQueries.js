@@ -58,7 +58,7 @@ FROM
   \`intentwise_ecommerce_graph.product_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id {{where_clause}}
+  {{where_clause}}
 GROUP BY 
   product, sku
 ORDER BY 

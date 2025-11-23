@@ -3,14 +3,18 @@ const cors = require("cors");
 const db = require("./db");
 const bigQueryRateLimiter = require("./src/middleware/rateLimiter");
 const bigqueryRoutes = require("./src/routes/bigqueryRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+const { protect } = require("./src/middleware/authMiddleware");
 require("dotenv").config();
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 app.use(bigQueryRateLimiter);
 const port = process.env.PORT || 3000;
 
-app.use("/", bigqueryRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/bigquery", protect, bigqueryRoutes);
 
 // GET USER BY ID
 // http://localhost:3000/user/1314390

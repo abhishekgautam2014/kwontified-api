@@ -55,8 +55,8 @@ const getSchema = async (tableId) => {
 
 // 🧩 1️⃣ Build WHERE clause dynamically based on filters
 const buildFilters = (filters, validColumns, fields, account_id) => {
-	let whereClause = " AND account_id = @account_id";
-	const params = { account_id: Number(account_id) };
+	let whereClause = "";
+	const params = {};
 
 	Object.entries(filters).forEach(([key, value]) => {
 		if (
@@ -117,7 +117,14 @@ const runQuery = async (queryParams) => {
 		throw new Error("account_id is a required parameter.");
 	}
 
-	const cacheKey = JSON.stringify(queryParams);
+	const sortedParams = Object.keys(queryParams)
+		.sort()
+		.reduce((obj, key) => {
+			obj[key] = queryParams[key];
+			return obj;
+		}, {});
+
+	const cacheKey = JSON.stringify(sortedParams);
 	const cachedData = getFromCache(cacheKey);
 	if (cachedData) {
 		return cachedData;
@@ -171,6 +178,7 @@ const runQuery = async (queryParams) => {
 		params = {
 			startDate,
 			endDate,
+			account_id: Number(account_id),
 			...filterParams,
 		};
 

@@ -14,7 +14,7 @@ FROM
 
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  
   {{where_clause}}
 
 GROUP BY 
@@ -37,7 +37,7 @@ FROM
 
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  
   {{where_clause}}
 
 GROUP BY 
@@ -59,7 +59,7 @@ FROM
 
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  
   {{where_clause}}
 
 GROUP BY 
@@ -84,7 +84,7 @@ FROM
 
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  
   {{where_clause}}
 
 GROUP BY 
@@ -104,7 +104,7 @@ FROM
 
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  
   AND match_type IS NOT NULL
   AND match_type != ''
   {{where_clause}}
@@ -126,7 +126,7 @@ FROM
 
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  
   AND match_type IS NOT NULL
   AND match_type != ''
   {{where_clause}}
@@ -147,7 +147,7 @@ FROM
 
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  
   AND match_type IS NOT NULL
   AND match_type != ''
   {{where_clause}}
@@ -169,7 +169,7 @@ FROM
   \`intentwise_ecommerce_graph.searchterm_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  
   AND match_type IS NOT NULL
   AND match_type != ''
   {{where_clause}}
@@ -192,7 +192,7 @@ FROM
   \`intentwise_ecommerce_graph.keyword_summary\`
 WHERE 
   report_date BETWEEN @startDate AND @endDate
-  AND account_id = @account_id
+  
   AND match_type IS NOT NULL
   AND match_type != ''
   {{where_clause}}

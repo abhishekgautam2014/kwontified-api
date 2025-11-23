@@ -16,6 +16,7 @@ current_period AS (
     CAST(IFNULL(SUM(avg_offer_count), 0) AS FLOAT64) AS avg_offer_count
   FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`, date_ranges
   WHERE sale_date BETWEEN date_ranges.start_date AND date_ranges.end_date
+    {{where_clause}}
     /* {{account_id_clause}} */
   GROUP BY sale_date
 ),
@@ -28,6 +29,7 @@ previous_period AS (
     CAST(IFNULL(SUM(avg_offer_count), 0) AS FLOAT64) AS prev_avg_offer_count
   FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`, date_ranges
   WHERE sale_date BETWEEN date_ranges.prev_start_date AND date_ranges.prev_end_date
+    {{where_clause}}
     /* {{account_id_clause}} */
   GROUP BY sale_date
 )
