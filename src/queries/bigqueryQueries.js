@@ -44,6 +44,7 @@ const {
 
 const {
 	buyBoxPercentageTrendQuery,
+	avgOfferTrendQuery,
 	trafficProductPerformanceTableQuery,
 	trafficSessionsPageviewsQuery,
 } = require("./trafficQueries");
@@ -303,6 +304,10 @@ const getShippmentOrderDashboardQuery = (accountIdClause) => `
 
 const getTrafficDashboardQuery = (accountIdClause) => `
     SELECT 'buyBoxPercentageTrendQuery' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${buyBoxPercentageTrendQuery
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
+    SELECT 'avgOfferTrendQuery' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${avgOfferTrendQuery
 		.replace("{{where_clause}}", accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
     UNION ALL
