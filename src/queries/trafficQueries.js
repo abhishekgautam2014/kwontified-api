@@ -11,8 +11,8 @@ date_ranges AS (
 -- Current period daily buy_box_percentage
 current_period AS (
   SELECT 
-    sale_date,
-    CONCAT(ROUND(AVG(buy_box_percentage), 2), '%') AS buy_box_percentage,   
+    sale_date,   
+    CAST(ROUND(AVG(buy_box_percentage), 2) AS FLOAT64) AS buy_box_percentage
     CAST(IFNULL(SUM(avg_offer_count), 0) AS FLOAT64) AS avg_offer_count
   FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`, date_ranges
   WHERE sale_date BETWEEN date_ranges.start_date AND date_ranges.end_date
@@ -24,7 +24,7 @@ current_period AS (
 previous_period AS (
   SELECT 
     sale_date,
-    CONCAT(ROUND(AVG(buy_box_percentage), 2), '%') AS prev_buy_box_percentage,
+    CAST(ROUND(AVG(buy_box_percentage), 2) AS FLOAT64) AS prev_buy_box_percentage,
     CAST(IFNULL(SUM(avg_offer_count), 0) AS FLOAT64) AS prev_avg_offer_count
   FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`, date_ranges
   WHERE sale_date BETWEEN date_ranges.prev_start_date AND date_ranges.prev_end_date
@@ -51,10 +51,13 @@ SELECT
   CAST(IFNULL(SUM(ordered_product_sales_amt), 0) AS FLOAT64) AS total_sales,
   CAST(IFNULL(SUM(units_ordered), 0) AS FLOAT64) AS units_ordered,
   CAST(IFNULL(SUM(traffic_by_asin_sessions), 0) AS FLOAT64) AS sessions,
-  CONCAT(ROUND(SUM(traffic_by_asin_sessions), 2), '%') AS sessions_percentage,
+  ROUND(
+  SUM(traffic_by_asin_sessions) 
+  / SUM(SUM(traffic_by_asin_sessions)) OVER() * 100
+, 2) AS sessions_percentage,
   CAST(IFNULL(SUM(traffic_by_asin_page_views), 0) AS FLOAT64) AS page_views,
-  CONCAT(ROUND(SUM(traffic_by_asin_page_views), 2), '%') AS page_views_percentage,
-  CONCAT(ROUND(AVG(traffic_by_asin_buy_box_prcntg), 2), '%') AS buy_box_percentage
+  ROUND(SUM(traffic_by_asin_page_views) / SUM(SUM(traffic_by_asin_page_views)) OVER() * 100, 2) AS page_views_percentage,
+  CAST(ROUND(AVG(traffic_by_asin_buy_box_prcntg), 2) AS FLOAT64) AS buy_box_percentage
 FROM 
   \`amazon_source_data.sellercentral_salesandtrafficbychildasin_report\`
 WHERE 
