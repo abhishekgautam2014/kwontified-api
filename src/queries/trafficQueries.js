@@ -12,7 +12,7 @@ date_ranges AS (
 current_period AS (
   SELECT 
     sale_date,   
-    CAST(ROUND(AVG(buy_box_percentage), 2) AS FLOAT64) AS buy_box_percentage
+    CAST(ROUND(AVG(buy_box_percentage), 2) AS FLOAT64) AS buy_box_percentage,
     CAST(IFNULL(SUM(avg_offer_count), 0) AS FLOAT64) AS avg_offer_count
   FROM \`amazon_source_data.sellercentral_salesandtrafficbydate_report\`, date_ranges
   WHERE sale_date BETWEEN date_ranges.start_date AND date_ranges.end_date
