@@ -12,7 +12,6 @@ const port = process.env.PORT || 3000;
 
 app.use("/", bigqueryRoutes);
 
-// GET USER BY ID
 // http://localhost:3000/user/1314390
 app.get("/user/:id", (req, res) => {
 	const id = req.params.id;
