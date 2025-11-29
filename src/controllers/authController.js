@@ -18,29 +18,33 @@ const login = (req, res) => {
 		[username],
 		(err, user) => {
 			if (err) {
-				return res
-					.status(500)
-					.json({ message: "Internal server error." });
+				return res.status(500).json({
+					success: false,
+					message: "Internal server error.",
+				});
 			}
 
 			if (!user) {
-				return res
-					.status(401)
-					.json({ message: "Invalid username or password." });
+				return res.status(401).json({
+					success: false,
+					message: "Invalid username or password.",
+				});
 			}
 
 			// Compare the provided password with the stored hash
 			bcrypt.compare(password, user.password, (err, isMatch) => {
 				if (err) {
-					return res
-						.status(500)
-						.json({ message: "Internal server error." });
+					return res.status(500).json({
+						success: false,
+						message: "Internal server error.",
+					});
 				}
 
 				if (!isMatch) {
-					return res
-						.status(401)
-						.json({ message: "Invalid username or password." });
+					return res.status(401).json({
+						success: false,
+						message: "Invalid username or password.",
+					});
 				}
 
 				// If the password is correct, create a JWT
@@ -52,7 +56,11 @@ const login = (req, res) => {
 					}
 				);
 
-				res.status(200).json({ message: "Login successful.", token });
+				res.status(200).json({
+					success: true,
+					message: "Login successful.",
+					token,
+				});
 			});
 		}
 	);
