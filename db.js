@@ -2,6 +2,9 @@
 const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database("./accounts.db");
 
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
 // Your data array
 const accounts = [
 	{ account_id: 1314390, account_name: "Fair Harbor Clothing Seller US" },
@@ -69,28 +72,57 @@ const accounts = [
 ];
 
 db.serialize(() => {
-	db.run(`
+	const defaultPassword = "Admin#123";
+	bcrypt.hash(defaultPassword, saltRounds, (err, hash) => {
+		if (err) {
+			console.error("Error hashing password:", err);
+			return;
+		}
+		db.run(
+			`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       account_id INTEGER UNIQUE,
       account_name TEXT,
-      password TEXT DEFAULT 'Admin#123'
+      username TEXT,
+      email TEXT,
+      name TEXT,
+      description TEXT,
+      password TEXT
     )
-  `);
+  `,
+			(err) => {
+				if (err) {
+					console.error("Error creating table:", err);
+					return;
+				}
+				const stmt = db.prepare(
+					"INSERT OR IGNORE INTO users (account_id, account_name, username, email, name, description, password) VALUES (?, ?, ?, ?, ?, ?, ?)"
+				);
 
-	const stmt = db.prepare(
-		"INSERT OR IGNORE INTO users (account_id, account_name, password) VALUES (?, ?, 'Admin#123')"
-	);
+				accounts.forEach((acc) => {
+					stmt.run(
+						acc.account_id,
+						acc.account_name,
+						acc.account_name.replace(/\s+/g, "").toLowerCase(),
+						`${acc.account_name
+							.replace(/\s+/g, "")
+							.toLowerCase()}@example.com`,
+						acc.account_name,
+						`Description for ${acc.account_name}`,
+						hash,
+						(err) => {
+							if (err) {
+								console.log("Insert error:", err.message);
+							}
+						}
+					);
+				});
 
-	accounts.forEach((acc) => {
-		stmt.run(acc.account_id, acc.account_name, (err) => {
-			if (err) {
-				console.log("Insert error:", err.message);
+				stmt.finalize();
 			}
-		});
+		);
 	});
-
-	stmt.finalize();
 });
 
 module.exports = db;
