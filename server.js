@@ -16,9 +16,7 @@ app.use("/", bigQueryRateLimiter, bigqueryRoutes);
 app.use("/auth", authRoutes);
 app.use("/", userRoutes);
 
-
-
 // Start server
 app.listen(port, () => {
-	console.log(`✅ Server is running on http://localhost:${port}`);
+	console.log(`✅ Server  is running on http://localhost:${port}`);
 });
