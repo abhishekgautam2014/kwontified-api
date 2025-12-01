@@ -89,6 +89,10 @@ const getDashboardMetricsQuery = (accountIdClause) => `
 		.replace("{{account_id_clause}}", accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
     UNION ALL
+    SELECT 'productSummary' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${productSummary
+		.replace("{{where_clause}}", accountIdClause)
+		.replace(/;\s*$/, "")}) AS t
+    UNION ALL
     SELECT 'acosTacosTrend' AS queryName, '[' || ARRAY_TO_STRING(ARRAY_AGG(TO_JSON_STRING(t)), ',') || ']' AS results FROM (${acosTacosTrend
 		.replace("{{account_id_clause}}", accountIdClause)
 		.replace(/;\s*$/, "")}) AS t
