@@ -131,6 +131,7 @@ const runQuery = async (queryParams) => {
 		"timeSeriesMetrics",
 		"accountSummary",
 		"dashboardMetrics",
+		"productSummary",
 		"advertisingDashboard",
 		"orderDashboard",
 		"yearlyMonthSalesDashboardMetrics",
