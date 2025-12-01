@@ -49,7 +49,13 @@ const login = (req, res) => {
 
 				// If the password is correct, create a JWT
 				const token = jwt.sign(
-					{ id: user.id, username: user.username },
+					{
+						id: user.id,
+						username: user.username,
+						account_id: user.account_id,
+						account_name: user.account_name,
+						name: user.name,
+					},
 					process.env.JWT_SECRET,
 					{
 						expiresIn: "24h", // Token expires in 1 hour
