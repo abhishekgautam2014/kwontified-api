@@ -1,145 +1,118 @@
-const db = require("./../../db");
-const bcrypt = require("bcrypt");
-const saltRounds = 10;
+const { User } = require('../../models');
+const bcrypt = require('bcrypt');
 
-exports.getAllUsers = (req, res) => {
-	db.all(
-		"SELECT id, account_id, account_name, username, email, name, description FROM users",
-		[],
-		(err, rows) => {
-			if (err) return res.status(500).json({ error: err.message });
-			res.json({ users: rows });
-		}
-	);
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] },
+    });
+    res.json({ users });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-exports.getUserById = (req, res) => {
-	const id = req.params.id;
-	db.get(
-		"SELECT id, account_id, account_name, username, email, name, description FROM users WHERE id = ?",
-		[id],
-		(err, row) => {
-			if (err) return res.status(500).json({ error: err.message });
-			if (!row)
-				return res.status(404).json({ message: "User not found" });
-			res.json(row);
-		}
-	);
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] },
+    });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-exports.createUser = (req, res) => {
-	const {
-		account_id,
-		account_name,
-		username,
-		email,
-		name,
-		description,
-		password,
-	} = req.body;
-	if (
-		!account_id ||
-		!account_name ||
-		!username ||
-		!email ||
-		!name ||
-		!description ||
-		!password
-	) {
-		return res
-			.status(400)
-			.json({ error: "Please provide all required fields." });
-	}
+exports.createUser = async (req, res) => {
+  const {
+    account_id,
+    account_name,
+    username,
+    email,
+    name,
+    description,
+    password,
+  } = req.body;
+  if (
+    !account_id ||
+    !account_name ||
+    !username ||
+    !email ||
+    !name ||
+    !description ||
+    !password
+  ) {
+    return res
+      .status(400)
+      .json({ error: 'Please provide all required fields.' });
+  }
 
-	bcrypt.hash(password, saltRounds, (err, hash) => {
-		if (err)
-			return res.status(500).json({ error: "Error hashing password." });
-
-		const stmt = db.prepare(
-			"INSERT INTO users (account_id, account_name, username, email, name, description, password) VALUES (?, ?, ?, ?, ?, ?, ?)"
-		);
-		stmt.run(
-			account_id,
-			account_name,
-			username,
-			email,
-			name,
-			description,
-			hash,
-			function (err) {
-				if (err) return res.status(500).json({ error: err.message });
-				res.status(201).json({ id: this.lastID });
-			}
-		);
-		stmt.finalize();
-	});
+  try {
+    const user = await User.create(req.body);
+    res.status(201).json({ id: user.id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-exports.updateUser = (req, res) => {
-	const id = req.params.id;
-	const { account_id, account_name, username, email, name, description } =
-		req.body;
-	if (
-		!account_id &&
-		!account_name &&
-		!username &&
-		!email &&
-		!name &&
-		!description
-	) {
-		return res
-			.status(400)
-			.json({ error: "Please provide at least one field to update." });
-	}
-
-	let fields = [];
-	let values = [];
-	if (account_id) {
-		fields.push("account_id = ?");
-		values.push(account_id);
-	}
-	if (account_name) {
-		fields.push("account_name = ?");
-		values.push(account_name);
-	}
-	if (username) {
-		fields.push("username = ?");
-		values.push(username);
-	}
-	if (email) {
-		fields.push("email = ?");
-		values.push(email);
-	}
-	if (name) {
-		fields.push("name = ?");
-		values.push(name);
-	}
-	if (description) {
-		fields.push("description = ?");
-		values.push(description);
-	}
-	values.push(id);
-
-	const stmt = db.prepare(
-		`UPDATE users SET ${fields.join(", ")} WHERE id = ?`
-	);
-	stmt.run(values, function (err) {
-		if (err) return res.status(500).json({ error: err.message });
-		if (this.changes === 0)
-			return res.status(404).json({ message: "User not found" });
-		res.json({ message: "User updated successfully." });
-	});
-	stmt.finalize();
+exports.updateUser = async (req, res) => {
+  try {
+    const [updated] = await User.update(req.body, {
+      where: { id: req.params.id },
+    });
+    if (updated) {
+      const updatedUser = await User.findByPk(req.params.id);
+      res.status(200).json(updatedUser);
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-exports.deleteUser = (req, res) => {
-	const id = req.params.id;
-	const stmt = db.prepare("DELETE FROM users WHERE id = ?");
-	stmt.run(id, function (err) {
-		if (err) return res.status(500).json({ error: err.message });
-		if (this.changes === 0)
-			return res.status(404).json({ message: "User not found" });
-		res.json({ message: "User deleted successfully." });
-	});
-	stmt.finalize();
+exports.deleteUser = async (req, res) => {
+  try {
+    const deleted = await User.destroy({
+      where: { id: req.params.id },
+    });
+    if (deleted) {
+      res.status(204).send();
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user.id; 
+
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ error: 'oldPassword and newPassword are required' });
+  }
+
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid old password' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
