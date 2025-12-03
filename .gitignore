@@ -62,7 +62,7 @@ all-client-amazon-database-5a661bb91494.json
 
 # Windows files
 Thumbs.db
-accounts.db
+*.db
 
 # Sensitive files
 all-client-amazon-database-5a661bb91494.json
